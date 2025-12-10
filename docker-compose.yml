@@ -1,0 +1,76 @@
+version: '3.8'
+
+services:
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: express-ts-api
+    restart: unless-stopped
+    ports:
+      - '3000:3000'
+    environment:
+      - NODE_ENV=production
+      - PORT=3000
+      - HOST=0.0.0.0
+      - API_PREFIX=/api
+      - CORS_ORIGIN=*
+      - RATE_LIMIT_WINDOW_MS=900000
+      - RATE_LIMIT_MAX_REQUESTS=100
+      - LOG_LEVEL=info
+      # Database connection (uncomment and configure as needed)
+      # - DATABASE_URL=postgresql://postgres:password@db:5432/mydb
+      # - MONGODB_URI=mongodb://mongo:27017/mydb
+    volumes:
+      - ./logs:/app/logs
+    networks:
+      - app-network
+    # Uncomment to add database dependency
+    # depends_on:
+    #   - db
+
+  # PostgreSQL (uncomment if needed)
+  # db:
+  #   image: postgres:15-alpine
+  #   container_name: postgres-db
+  #   restart: unless-stopped
+  #   environment:
+  #     - POSTGRES_USER=postgres
+  #     - POSTGRES_PASSWORD=password
+  #     - POSTGRES_DB=mydb
+  #   ports:
+  #     - '5432:5432'
+  #   volumes:
+  #     - postgres-data:/var/lib/postgresql/data
+  #   networks:
+  #     - app-network
+
+  # MongoDB (uncomment if needed)
+  mongo:
+    image: mongo:7
+    container_name: mongodb
+    restart: unless-stopped
+    ports:
+      - '27017:27017'
+    volumes:
+      - mongo-data:/data/db
+    networks:
+      - app-network
+
+  # Redis (uncomment if needed)
+  redis:
+    image: redis:7-alpine
+    container_name: redis-cache
+    restart: unless-stopped
+    ports:
+      - '6379:6379'
+    networks:
+      - app-network
+
+networks:
+  app-network:
+    driver: bridge
+
+volumes:
+  postgres-data:
+  mongo-data:
