@@ -3,11 +3,10 @@ import createApp from './app';
 import config from './config';
 import logger from './utils/logger';
 import { handleUncaughtException, handleUnhandledRejection } from './middlewares/errorHandler';
+import mongoose from 'mongoose';
 
-// Handle uncaught exceptions
 process.on('uncaughtException', handleUncaughtException);
 
-// Handle unhandled promise rejections
 process.on('unhandledRejection', handleUnhandledRejection);
 
 const app = createApp();
@@ -19,7 +18,7 @@ const server = http.createServer(app);
 const gracefulShutdown = (signal: string): void => {
   logger.info(`${signal} received. Starting graceful shutdown...`);
 
-  server.close((err) => {
+  server.close(async (err) => {
     if (err) {
       logger.error('Error during server close:', err);
       process.exit(1);
@@ -28,8 +27,7 @@ const gracefulShutdown = (signal: string): void => {
     logger.info('HTTP server closed');
 
     // Close database connections here
-    // await prisma.$disconnect();
-    // await mongoose.connection.close();
+    await mongoose.connection.close();
 
     logger.info('Graceful shutdown completed');
     process.exit(0);

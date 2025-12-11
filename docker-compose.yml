@@ -5,65 +5,67 @@ services:
     build:
       context: .
       dockerfile: Dockerfile
-    container_name: express-ts-api
+    container_name: ${APP_CONTAINER_NAME:-express-ts-api}
     restart: unless-stopped
     ports:
-      - '3000:3000'
+      - '${APP_PORT:-3000}:3000'
     environment:
-      - NODE_ENV=production
+      - NODE_ENV=${NODE_ENV:-production}
       - PORT=3000
       - HOST=0.0.0.0
-      - API_PREFIX=/api
-      - CORS_ORIGIN=*
-      - RATE_LIMIT_WINDOW_MS=900000
-      - RATE_LIMIT_MAX_REQUESTS=100
-      - LOG_LEVEL=info
-      # Database connection (uncomment and configure as needed)
-      # - DATABASE_URL=postgresql://postgres:password@db:5432/mydb
-      # - MONGODB_URI=mongodb://mongo:27017/mydb
+      - API_PREFIX=${API_PREFIX:-/api}
+      - CORS_ORIGIN=${CORS_ORIGIN:-*}
+      - RATE_LIMIT_WINDOW_MS=${RATE_LIMIT_WINDOW_MS:-900000}
+      - RATE_LIMIT_MAX_REQUESTS=${RATE_LIMIT_MAX_REQUESTS:-100}
+      - LOG_LEVEL=${LOG_LEVEL:-info}
+      - MONGODB_URI=mongodb://mongo:27017/${MONGO_DB_NAME:-mydb}
+      - REDIS_URL=redis://redis:6379
     volumes:
       - ./logs:/app/logs
     networks:
       - app-network
-    # Uncomment to add database dependency
-    # depends_on:
-    #   - db
+    depends_on:
+      - mongo
+      - redis
 
-  # PostgreSQL (uncomment if needed)
-  # db:
-  #   image: postgres:15-alpine
-  #   container_name: postgres-db
-  #   restart: unless-stopped
-  #   environment:
-  #     - POSTGRES_USER=postgres
-  #     - POSTGRES_PASSWORD=password
-  #     - POSTGRES_DB=mydb
-  #   ports:
-  #     - '5432:5432'
-  #   volumes:
-  #     - postgres-data:/var/lib/postgresql/data
-  #   networks:
-  #     - app-network
-
-  # MongoDB (uncomment if needed)
+  # MongoDB
   mongo:
-    image: mongo:7
-    container_name: mongodb
+    image: mongo:${MONGO_VERSION:-7}
+    container_name: ${MONGO_CONTAINER_NAME:-mongodb}
     restart: unless-stopped
     ports:
-      - '27017:27017'
+      - '${MONGO_PORT:-27018}:27017'
+    environment:
+      - MONGO_INITDB_DATABASE=${MONGO_DB_NAME:-mydb}
     volumes:
       - mongo-data:/data/db
     networks:
       - app-network
 
-  # Redis (uncomment if needed)
-  redis:
-    image: redis:7-alpine
-    container_name: redis-cache
+  # Mongo Express - MongoDB GUI
+  mongo-express:
+    image: mongo-express:latest
+    container_name: ${MONGO_EXPRESS_CONTAINER_NAME:-mongo-express}
     restart: unless-stopped
     ports:
-      - '6379:6379'
+      - '${MONGO_EXPRESS_PORT:-8081}:8081'
+    environment:
+      - ME_CONFIG_MONGODB_SERVER=${MONGO_CONTAINER_NAME:-mongodb}
+      - ME_CONFIG_MONGODB_PORT=27017
+      - ME_CONFIG_BASICAUTH_USERNAME=${MONGO_EXPRESS_USER:-admin}
+      - ME_CONFIG_BASICAUTH_PASSWORD=${MONGO_EXPRESS_PASSWORD:-admin123}
+    depends_on:
+      - mongo
+    networks:
+      - app-network
+
+  # Redis
+  redis:
+    image: redis:${REDIS_VERSION:-7-alpine}
+    container_name: ${REDIS_CONTAINER_NAME:-redis-cache}
+    restart: unless-stopped
+    ports:
+      - '${REDIS_PORT:-6381}:6379'
     networks:
       - app-network
 
@@ -72,5 +74,4 @@ networks:
     driver: bridge
 
 volumes:
-  postgres-data:
   mongo-data:
