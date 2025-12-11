@@ -8,6 +8,9 @@ import config from './config';
 import routes from './routes';
 import { morganStream } from './utils/logger';
 import { errorHandler, notFoundHandler, defaultRateLimiter } from './middlewares';
+import { connectDB } from './config/database';
+
+connectDB();
 
 /**
  * Create and configure Express application

@@ -1,7 +1,7 @@
-import { Router } from 'express';
+import { Router, type Router as RouterType } from 'express';
 import healthRoutes from './health.routes';
 
-const router = Router();
+const router: RouterType = Router();
 
 // Health check routes (no API prefix for K8s probes)
 router.use('/health', healthRoutes);
