@@ -29,6 +29,20 @@ interface Config {
     accessExpiresIn: string;
     refreshExpiresIn: string;
   };
+  redis: {
+    url: string;
+    host: string;
+    port: number;
+    password: string | undefined;
+  };
+  onesignal: {
+    appId: string;
+    apiKey: string;
+  };
+  socket: {
+    path: string;
+    corsOrigin: string;
+  };
 }
 
 const config: Config = {
@@ -55,6 +69,20 @@ const config: Config = {
     refreshSecret: process.env.JWT_REFRESH_SECRET || 'dev-refresh-secret-change-in-production-min-32-chars',
     accessExpiresIn: process.env.JWT_ACCESS_EXPIRES_IN || '15m',
     refreshExpiresIn: process.env.JWT_REFRESH_EXPIRES_IN || '7d',
+  },
+  redis: {
+    url: process.env.REDIS_URL || 'redis://localhost:6379',
+    host: process.env.REDIS_HOST || 'localhost',
+    port: parseInt(process.env.REDIS_PORT || '6379', 10),
+    password: process.env.REDIS_PASSWORD || undefined,
+  },
+  onesignal: {
+    appId: process.env.ONESIGNAL_APP_ID || '',
+    apiKey: process.env.ONESIGNAL_API_KEY || '',
+  },
+  socket: {
+    path: process.env.SOCKET_PATH || '/socket.io',
+    corsOrigin: process.env.SOCKET_CORS_ORIGIN || '*',
   },
 };
 

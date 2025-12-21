@@ -4,6 +4,8 @@ import config from './config';
 import logger from './utils/logger';
 import { handleUncaughtException, handleUnhandledRejection } from './middlewares/errorHandler';
 import mongoose from 'mongoose';
+import { redisService } from './services/redis.service';
+import { socketService } from './services/socket.service';
 
 process.on('uncaughtException', handleUncaughtException);
 
@@ -26,8 +28,17 @@ const gracefulShutdown = (signal: string): void => {
 
     logger.info('HTTP server closed');
 
-    // Close database connections here
+    // Close Socket.IO connections
+    await socketService.close();
+    logger.info('Socket.IO server closed');
+
+    // Close Redis connections
+    await redisService.disconnect();
+    logger.info('Redis connections closed');
+
+    // Close database connections
     await mongoose.connection.close();
+    logger.info('MongoDB connection closed');
 
     logger.info('Graceful shutdown completed');
     process.exit(0);
@@ -45,11 +56,21 @@ process.on('SIGTERM', () => gracefulShutdown('SIGTERM'));
 process.on('SIGINT', () => gracefulShutdown('SIGINT'));
 
 /**
- * Start the server
+ * Initialize services and start the server
  */
-const startServer = (): void => {
-  server.listen(config.port, config.host, () => {
-    logger.info(`
+const startServer = async (): Promise<void> => {
+  try {
+    // Initialize Redis
+    await redisService.connect();
+    logger.info('Redis connected');
+
+    // Initialize Socket.IO with Redis adapter
+    await socketService.initialize(server);
+    logger.info('Socket.IO initialized');
+
+    // Start HTTP server
+    server.listen(config.port, config.host, () => {
+      logger.info(`
 ╔═══════════════════════════════════════════════════════════╗
 ║                                                           ║
 ║   🚀 Server is running!                                   ║
@@ -58,29 +79,34 @@ const startServer = (): void => {
 ║   ➤ URL: http://${config.host}:${config.port}${' '.repeat(Math.max(0, 34 - `${config.host}:${config.port}`.length))}║
 ║   ➤ API: http://${config.host}:${config.port}${config.api.prefix}${' '.repeat(Math.max(0, 34 - `${config.host}:${config.port}${config.api.prefix}`.length))}║
 ║   ➤ Health: http://${config.host}:${config.port}${config.api.prefix}/health${' '.repeat(Math.max(0, 27 - `${config.host}:${config.port}${config.api.prefix}`.length))}║
+║   ➤ Socket.IO: ws://${config.host}:${config.port}${config.socket.path}${' '.repeat(Math.max(0, 26 - `${config.host}:${config.port}${config.socket.path}`.length))}║
 ║                                                           ║
 ╚═══════════════════════════════════════════════════════════╝
     `);
-  });
+    });
 
-  server.on('error', (error: NodeJS.ErrnoException) => {
-    if (error.syscall !== 'listen') {
-      throw error;
-    }
-
-    switch (error.code) {
-      case 'EACCES':
-        logger.error(`Port ${config.port} requires elevated privileges`);
-        process.exit(1);
-        break;
-      case 'EADDRINUSE':
-        logger.error(`Port ${config.port} is already in use`);
-        process.exit(1);
-        break;
-      default:
+    server.on('error', (error: NodeJS.ErrnoException) => {
+      if (error.syscall !== 'listen') {
         throw error;
-    }
-  });
+      }
+
+      switch (error.code) {
+        case 'EACCES':
+          logger.error(`Port ${config.port} requires elevated privileges`);
+          process.exit(1);
+          break;
+        case 'EADDRINUSE':
+          logger.error(`Port ${config.port} is already in use`);
+          process.exit(1);
+          break;
+        default:
+          throw error;
+      }
+    });
+  } catch (error) {
+    logger.error('Failed to start server:', error);
+    process.exit(1);
+  }
 };
 
 startServer();

@@ -19,6 +19,8 @@ export interface ISession extends Document {
   userId: mongoose.Types.ObjectId;
   refreshTokenHash: string;
   deviceInfo: IDeviceInfo;
+  pushToken?: string; // OneSignal player ID for push notifications
+  socketId?: string; // Current socket connection ID
   expiresAt: Date;
   lastActivityAt: Date;
   isRevoked: boolean;
@@ -73,6 +75,13 @@ const sessionSchema = new Schema<ISession>(
     deviceInfo: {
       type: deviceInfoSchema,
       required: true,
+    },
+    pushToken: {
+      type: String,
+      index: true,
+    },
+    socketId: {
+      type: String,
     },
     expiresAt: {
       type: Date,

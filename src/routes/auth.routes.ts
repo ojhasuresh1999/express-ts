@@ -17,8 +17,7 @@ const router: RouterType = Router();
 router.post(
   '/register',
   extractDeviceInfo,
-  registerValidator,
-  validate,
+  validate(registerValidator),
   authController.register
 );
 
@@ -30,8 +29,7 @@ router.post(
 router.post(
   '/login',
   extractDeviceInfo,
-  loginValidator,
-  validate,
+  validate(loginValidator),
   authController.login
 );
 
@@ -42,8 +40,7 @@ router.post(
  */
 router.post(
   '/refresh',
-  refreshTokenValidator,
-  validate,
+  validate(refreshTokenValidator),
   authController.refresh
 );
 

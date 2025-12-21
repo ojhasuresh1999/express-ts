@@ -16,6 +16,7 @@ export const register = async (
 ): Promise<void> => {
   try {
     const { email, password, firstName, lastName } = req.body;
+    console.log(req.body);
     const deviceInfo = req.deviceInfo as IDeviceInfo;
 
     if (!deviceInfo) {
