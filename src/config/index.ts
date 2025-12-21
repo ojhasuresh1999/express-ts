@@ -23,6 +23,12 @@ interface Config {
     level: string;
     format: string;
   };
+  jwt: {
+    accessSecret: string;
+    refreshSecret: string;
+    accessExpiresIn: string;
+    refreshExpiresIn: string;
+  };
 }
 
 const config: Config = {
@@ -43,6 +49,12 @@ const config: Config = {
   logging: {
     level: process.env.LOG_LEVEL || 'debug',
     format: process.env.LOG_FORMAT || 'dev',
+  },
+  jwt: {
+    accessSecret: process.env.JWT_ACCESS_SECRET || 'dev-access-secret-change-in-production-min-32-chars',
+    refreshSecret: process.env.JWT_REFRESH_SECRET || 'dev-refresh-secret-change-in-production-min-32-chars',
+    accessExpiresIn: process.env.JWT_ACCESS_EXPIRES_IN || '15m',
+    refreshExpiresIn: process.env.JWT_REFRESH_EXPIRES_IN || '7d',
   },
 };
 

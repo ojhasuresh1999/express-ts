@@ -1,11 +1,7 @@
 /**
  * Models directory
- * Add your database models/entities here
- *
- * Examples:
- * - Prisma models (schema.prisma in root)
- * - Mongoose models
- * - TypeORM entities
+ * Export all database models
  */
 
-export {};
+export { default as User, IUser, UserRole } from './User';
+export { default as Session, ISession, IDeviceInfo } from './Session';
