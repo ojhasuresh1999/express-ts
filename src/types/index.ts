@@ -1,14 +1,22 @@
 import { Request } from 'express';
+import { UserRole } from '../models/User';
+import { IDeviceInfo } from '../models/Session';
 
 /**
  * Extended Express Request with user information
+ * Note: This should match the global Express augmentation in middlewares/auth.ts
  */
 export interface AuthenticatedRequest extends Request {
   user?: {
     id: string;
     email: string;
-    role: string;
+    role: UserRole;
+    isActive: boolean;
   };
+  session?: {
+    id: string;
+  };
+  deviceInfo?: IDeviceInfo;
 }
 
 /**
