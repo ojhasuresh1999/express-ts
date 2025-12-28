@@ -27,6 +27,7 @@ export const MESSAGES = {
     ROLE_UPDATED: 'User role updated successfully',
     DEACTIVATED: 'User deactivated successfully',
     ACTIVATED: 'User activated successfully',
+    INVALID_ROLE: 'Invalid role. Allowed roles: {roles}',
   },
   SERVER: {
     INTERNAL_ERROR: 'Internal server error',
