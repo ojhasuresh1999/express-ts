@@ -4,6 +4,7 @@ import { sendSuccess, sendCreated } from '../utils/response';
 import { ApiError } from '../utils/ApiError';
 import { IDeviceInfo } from '../models';
 import { StatusCodes } from 'http-status-codes';
+import { MESSAGES } from '../constants/messages';
 
 /**
  * Register a new user
@@ -20,7 +21,7 @@ export const register = async (
     const deviceInfo = req.deviceInfo as IDeviceInfo;
 
     if (!deviceInfo) {
-      throw ApiError.internal('Device info not available');
+      throw ApiError.internal(MESSAGES.AUTH.DEVICE_INFO_MISSING);
     }
 
     const result = await authService.register(
@@ -28,7 +29,7 @@ export const register = async (
       deviceInfo
     );
 
-    sendCreated(res, result, 'Registration successful');
+    sendCreated(res, result, MESSAGES.AUTH.REGISTER_SUCCESS);
   } catch (error) {
     next(error);
   }
@@ -48,12 +49,12 @@ export const login = async (
     const deviceInfo = req.deviceInfo as IDeviceInfo;
 
     if (!deviceInfo) {
-      throw ApiError.internal('Device info not available');
+      throw ApiError.internal(MESSAGES.AUTH.DEVICE_INFO_MISSING);
     }
 
     const result = await authService.login({ email, password }, deviceInfo);
 
-    sendSuccess(res, result, 'Login successful');
+    sendSuccess(res, result, MESSAGES.AUTH.LOGIN_SUCCESS);
   } catch (error) {
     next(error);
   }
@@ -73,7 +74,7 @@ export const refresh = async (
 
     const result = await authService.refreshAccessToken(refreshToken);
 
-    sendSuccess(res, result, 'Token refreshed successfully');
+    sendSuccess(res, result, MESSAGES.AUTH.TOKEN_REFRESH_SUCCESS);
   } catch (error) {
     next(error);
   }
@@ -97,7 +98,7 @@ export const logout = async (
 
     res.status(StatusCodes.OK).json({
       success: true,
-      message: 'Logged out successfully',
+      message: MESSAGES.AUTH.LOGOUT_SUCCESS,
     });
   } catch (error) {
     next(error);
@@ -115,7 +116,7 @@ export const logoutAll = async (
 ): Promise<void> => {
   try {
     if (!req.user) {
-      throw ApiError.unauthorized('Not authenticated');
+      throw ApiError.unauthorized(MESSAGES.AUTH.NOT_AUTHENTICATED);
     }
 
     const currentSessionId = req.session?.id;
@@ -145,7 +146,7 @@ export const getSessions = async (
 ): Promise<void> => {
   try {
     if (!req.user) {
-      throw ApiError.unauthorized('Not authenticated');
+      throw ApiError.unauthorized(MESSAGES.AUTH.NOT_AUTHENTICATED);
     }
 
     const sessions = await authService.getActiveSessions(req.user.id);
@@ -167,17 +168,17 @@ export const revokeSession = async (
 ): Promise<void> => {
   try {
     if (!req.user) {
-      throw ApiError.unauthorized('Not authenticated');
+      throw ApiError.unauthorized(MESSAGES.AUTH.NOT_AUTHENTICATED);
     }
 
     const { sessionId } = req.params;
     const revoked = await authService.revokeSession(req.user.id, sessionId);
 
     if (!revoked) {
-      throw ApiError.notFound('Session not found');
+      throw ApiError.notFound(MESSAGES.AUTH.SESSION_NOT_FOUND);
     }
 
-    sendSuccess(res, null, 'Session revoked successfully');
+    sendSuccess(res, null, MESSAGES.AUTH.SESSION_REVOKED);
   } catch (error) {
     next(error);
   }

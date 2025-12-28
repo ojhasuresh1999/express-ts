@@ -5,6 +5,7 @@ import config from '../config';
 import logger from '../utils/logger';
 import { redisService } from './redis.service';
 import * as tokenService from './token.service';
+import { MESSAGES } from '../constants/messages';
 
 /**
  * Extended socket with user data
@@ -67,7 +68,7 @@ class SocketService {
         const token = socket.handshake.auth.token || socket.handshake.headers.authorization?.replace('Bearer ', '');
 
         if (!token) {
-          return next(new Error('Authentication required'));
+          return next(new Error(MESSAGES.SERVER.AUTH_REQUIRED));
         }
 
         const payload = await tokenService.verifyAccessToken(token);
@@ -75,7 +76,7 @@ class SocketService {
         // Note: sessionId is not in access token, we use userId for room management
         next();
       } catch {
-        next(new Error('Invalid token'));
+        next(new Error(MESSAGES.AUTH.INVALID_TOKEN));
       }
     });
 
@@ -111,7 +112,7 @@ class SocketService {
    */
   public getIO(): Server {
     if (!this.io) {
-      throw new Error('Socket.IO not initialized. Call initialize() first.');
+      throw new Error(MESSAGES.SERVER.SOCKET_NOT_INIT);
     }
     return this.io;
   }

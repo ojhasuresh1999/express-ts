@@ -2,6 +2,7 @@ import { Request, Response, NextFunction } from 'express';
 import { User, UserRole } from '../models';
 import { sendSuccess } from '../utils/response';
 import { ApiError } from '../utils/ApiError';
+import { MESSAGES } from '../constants/messages';
 
 /**
  * Get current user profile
@@ -14,13 +15,13 @@ export const getMe = async (
 ): Promise<void> => {
   try {
     if (!req.user) {
-      throw ApiError.unauthorized('Not authenticated');
+      throw ApiError.unauthorized(MESSAGES.AUTH.NOT_AUTHENTICATED);
     }
 
     const user = await User.findById(req.user.id);
 
     if (!user) {
-      throw ApiError.notFound('User not found');
+      throw ApiError.notFound(MESSAGES.USER.NOT_FOUND);
     }
 
     sendSuccess(res, { user: user.toJSON() });
@@ -40,7 +41,7 @@ export const updateMe = async (
 ): Promise<void> => {
   try {
     if (!req.user) {
-      throw ApiError.unauthorized('Not authenticated');
+      throw ApiError.unauthorized(MESSAGES.AUTH.NOT_AUTHENTICATED);
     }
 
     const allowedUpdates = ['firstName', 'lastName'];
@@ -53,7 +54,7 @@ export const updateMe = async (
     }
 
     if (Object.keys(updates).length === 0) {
-      throw ApiError.badRequest('No valid fields to update');
+      throw ApiError.badRequest(MESSAGES.USER.NO_UPDATES);
     }
 
     const user = await User.findByIdAndUpdate(req.user.id, updates, {
@@ -62,10 +63,10 @@ export const updateMe = async (
     });
 
     if (!user) {
-      throw ApiError.notFound('User not found');
+      throw ApiError.notFound(MESSAGES.USER.NOT_FOUND);
     }
 
-    sendSuccess(res, { user: user.toJSON() }, 'Profile updated successfully');
+    sendSuccess(res, { user: user.toJSON() }, MESSAGES.USER.PROFILE_UPDATED);
   } catch (error) {
     next(error);
   }
@@ -124,7 +125,7 @@ export const getUserById = async (
     const user = await User.findById(req.params.id);
 
     if (!user) {
-      throw ApiError.notFound('User not found');
+      throw ApiError.notFound(MESSAGES.USER.NOT_FOUND);
     }
 
     sendSuccess(res, { user: user.toJSON() });
@@ -147,7 +148,7 @@ export const updateUserRole = async (
 
     if (!role || !Object.values(UserRole).includes(role)) {
       throw ApiError.badRequest(
-        `Invalid role. Allowed: ${Object.values(UserRole).join(', ')}`
+        MESSAGES.USER.INVALID_ROLE.replace('{roles}', Object.values(UserRole).join(', '))
       );
     }
 
@@ -158,10 +159,10 @@ export const updateUserRole = async (
     );
 
     if (!user) {
-      throw ApiError.notFound('User not found');
+      throw ApiError.notFound(MESSAGES.USER.NOT_FOUND);
     }
 
-    sendSuccess(res, { user: user.toJSON() }, 'User role updated successfully');
+    sendSuccess(res, { user: user.toJSON() }, MESSAGES.USER.ROLE_UPDATED);
   } catch (error) {
     next(error);
   }
@@ -184,10 +185,10 @@ export const deactivateUser = async (
     );
 
     if (!user) {
-      throw ApiError.notFound('User not found');
+      throw ApiError.notFound(MESSAGES.USER.NOT_FOUND);
     }
 
-    sendSuccess(res, { user: user.toJSON() }, 'User deactivated successfully');
+    sendSuccess(res, { user: user.toJSON() }, MESSAGES.USER.DEACTIVATED);
   } catch (error) {
     next(error);
   }
@@ -210,10 +211,10 @@ export const activateUser = async (
     );
 
     if (!user) {
-      throw ApiError.notFound('User not found');
+      throw ApiError.notFound(MESSAGES.USER.NOT_FOUND);
     }
 
-    sendSuccess(res, { user: user.toJSON() }, 'User activated successfully');
+    sendSuccess(res, { user: user.toJSON() }, MESSAGES.USER.ACTIVATED);
   } catch (error) {
     next(error);
   }

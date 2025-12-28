@@ -1,5 +1,6 @@
 import { Response } from 'express';
 import { StatusCodes } from 'http-status-codes';
+import { MESSAGES } from '../constants/messages';
 
 interface SuccessResponse<T> {
   success: true;
@@ -57,7 +58,7 @@ export const sendSuccess = <T>(
 export const sendCreated = <T>(
   res: Response,
   data: T,
-  message = 'Resource created successfully'
+  message = MESSAGES.SERVER.RESOURCE_CREATED
 ): Response<ApiResponse<T>> => {
   return sendSuccess(res, data, message, StatusCodes.CREATED);
 };

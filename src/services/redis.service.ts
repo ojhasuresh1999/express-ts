@@ -1,6 +1,7 @@
 import Redis from 'ioredis';
 import config from '../config';
 import logger from '../utils/logger';
+import { MESSAGES } from '../constants/messages';
 
 /**
  * Redis client singleton
@@ -71,7 +72,7 @@ class RedisService {
    */
   public getClient(): Redis {
     if (!this.client) {
-      throw new Error('Redis client not initialized. Call connect() first.');
+      throw new Error(MESSAGES.SERVER.REDIS_CLIENT_NOT_INIT);
     }
     return this.client;
   }
@@ -81,7 +82,7 @@ class RedisService {
    */
   public getPublisher(): Redis {
     if (!this.publisher) {
-      throw new Error('Redis publisher not initialized. Call connect() first.');
+      throw new Error(MESSAGES.SERVER.REDIS_PUB_NOT_INIT);
     }
     return this.publisher;
   }
@@ -91,7 +92,7 @@ class RedisService {
    */
   public getSubscriber(): Redis {
     if (!this.subscriber) {
-      throw new Error('Redis subscriber not initialized. Call connect() first.');
+      throw new Error(MESSAGES.SERVER.REDIS_SUB_NOT_INIT);
     }
     return this.subscriber;
   }

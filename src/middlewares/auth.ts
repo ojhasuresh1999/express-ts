@@ -3,6 +3,7 @@ import { ApiError } from '../utils/ApiError';
 import { verifyAccessToken, AccessTokenPayload } from '../services/token.service';
 import { User, UserRole } from '../models';
 import logger from '../utils/logger';
+import { MESSAGES } from '../constants/messages';
 
 /**
  * Extended request with authenticated user and session
@@ -36,13 +37,13 @@ export const authenticate = async (
     const authHeader = req.headers.authorization;
 
     if (!authHeader || !authHeader.startsWith('Bearer ')) {
-      throw ApiError.unauthorized('No token provided');
+      throw ApiError.unauthorized(MESSAGES.AUTH.NO_TOKEN);
     }
 
     const token = authHeader.split(' ')[1];
 
     if (!token) {
-      throw ApiError.unauthorized('No token provided');
+      throw ApiError.unauthorized(MESSAGES.AUTH.NO_TOKEN);
     }
 
     // Verify token
@@ -51,18 +52,18 @@ export const authenticate = async (
       payload = await verifyAccessToken(token);
     } catch (error) {
       logger.debug(`Token verification failed: ${(error as Error).message}`);
-      throw ApiError.unauthorized('Invalid or expired token');
+      throw ApiError.unauthorized(MESSAGES.AUTH.INVALID_TOKEN);
     }
 
     // Get user from database
     const user = await User.findById(payload.userId);
 
     if (!user) {
-      throw ApiError.unauthorized('User not found');
+      throw ApiError.unauthorized(MESSAGES.AUTH.USER_NOT_FOUND);
     }
 
     if (!user.isActive) {
-      throw ApiError.forbidden('Account is deactivated');
+      throw ApiError.forbidden(MESSAGES.AUTH.ACCOUNT_DEACTIVATED);
     }
 
     // Attach user to request
@@ -86,7 +87,7 @@ export const authenticate = async (
 export const authorize = (...allowedRoles: UserRole[]) => {
   return (req: Request, _res: Response, next: NextFunction): void => {
     if (!req.user) {
-      return next(ApiError.unauthorized('Not authenticated'));
+      return next(ApiError.unauthorized(MESSAGES.AUTH.NOT_AUTHENTICATED));
     }
 
     if (allowedRoles.length === 0) {
@@ -162,7 +163,7 @@ export const authenticateRefreshToken = async (
     const { refreshToken } = req.body;
 
     if (!refreshToken) {
-      throw ApiError.badRequest('Refresh token is required');
+      throw ApiError.badRequest(MESSAGES.AUTH.REFRESH_TOKEN_REQUIRED);
     }
 
     // Token will be verified in the service layer

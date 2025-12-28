@@ -8,6 +8,7 @@ import {
 } from './token.service';
 import { ApiError } from '../utils/ApiError';
 import logger from '../utils/logger';
+import { MESSAGES } from '../constants/messages';
 
 /**
  * Authentication result interface
@@ -58,7 +59,7 @@ export const register = async (
   // Check if user already exists
   const existingUser = await User.findOne({ email: input.email.toLowerCase() });
   if (existingUser) {
-    throw ApiError.conflict('User with this email already exists');
+    throw ApiError.conflict(MESSAGES.AUTH.EMAIL_EXISTS);
   }
 
   // Create user
@@ -118,18 +119,18 @@ export const login = async (
   );
 
   if (!user) {
-    throw ApiError.unauthorized('Invalid email or password');
+    throw ApiError.unauthorized(MESSAGES.AUTH.INVALID_CREDENTIALS);
   }
 
   // Check if user is active
   if (!user.isActive) {
-    throw ApiError.forbidden('Account is deactivated');
+    throw ApiError.forbidden(MESSAGES.AUTH.ACCOUNT_DEACTIVATED);
   }
 
   // Verify password
   const isPasswordValid = await user.comparePassword(input.password);
   if (!isPasswordValid) {
-    throw ApiError.unauthorized('Invalid email or password');
+    throw ApiError.unauthorized(MESSAGES.AUTH.INVALID_CREDENTIALS);
   }
 
   // Generate tokens
@@ -184,7 +185,7 @@ export const refreshAccessToken = async (
   // Find session
   const session = await Session.findById(sessionId);
   if (!session || session.isRevoked) {
-    throw ApiError.unauthorized('Invalid or expired session');
+    throw ApiError.unauthorized(MESSAGES.AUTH.INVALID_SESSION);
   }
 
   // Verify token hash
@@ -193,20 +194,20 @@ export const refreshAccessToken = async (
     // Token reuse detected - revoke all sessions for security
     await Session.updateMany({ userId }, { isRevoked: true });
     logger.warn(`Token reuse detected for user: ${userId}`);
-    throw ApiError.unauthorized('Token reuse detected. All sessions revoked.');
+    throw ApiError.unauthorized(MESSAGES.AUTH.TOKEN_REUSE);
   }
 
   // Check if session expired
   if (session.expiresAt < new Date()) {
     session.isRevoked = true;
     await session.save();
-    throw ApiError.unauthorized('Session expired');
+    throw ApiError.unauthorized(MESSAGES.AUTH.SESSION_EXPIRED);
   }
 
   // Get user
   const user = await User.findById(userId);
   if (!user || !user.isActive) {
-    throw ApiError.unauthorized('User not found or inactive');
+    throw ApiError.unauthorized(MESSAGES.AUTH.USER_INACTIVE);
   }
 
   // Generate new tokens (token rotation)

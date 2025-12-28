@@ -3,6 +3,7 @@ import { ApiError } from '../utils/ApiError';
 import { sendError } from '../utils/response';
 import logger from '../utils/logger';
 import config from '../config';
+import { MESSAGES } from '../constants/messages';
 
 /**
  * Convert non-ApiError errors to ApiError
@@ -18,19 +19,19 @@ const normalizeError = (err: Error): ApiError => {
   }
 
   if (err.name === 'CastError') {
-    return ApiError.badRequest('Invalid ID format');
+    return ApiError.badRequest(MESSAGES.SERVER.INVALID_ID);
   }
 
   if (err.name === 'JsonWebTokenError') {
-    return ApiError.unauthorized('Invalid token');
+    return ApiError.unauthorized(MESSAGES.AUTH.INVALID_TOKEN);
   }
 
   if (err.name === 'TokenExpiredError') {
-    return ApiError.unauthorized('Token expired');
+    return ApiError.unauthorized(MESSAGES.SERVER.TOKEN_EXPIRED);
   }
 
   // Default to internal server error
-  return ApiError.internal(config.env === 'production' ? 'Internal server error' : err.message);
+  return ApiError.internal(config.env === 'production' ? MESSAGES.SERVER.INTERNAL_ERROR : err.message);
 };
 
 /**
@@ -64,7 +65,12 @@ export const errorHandler = (
  * 404 Not Found handler
  */
 export const notFoundHandler = (req: Request, _res: Response, next: NextFunction): void => {
-  const error = ApiError.notFound(`Route ${req.method} ${req.originalUrl} not found`);
+  const error = ApiError.notFound(
+    MESSAGES.SERVER.ROUTE_NOT_FOUND.replace('{method}', req.method).replace(
+      '{url}',
+      req.originalUrl
+    )
+  );
   next(error);
 };
 
