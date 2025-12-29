@@ -10,24 +10,16 @@ import { MESSAGES } from '../constants/messages';
  * Register a new user
  * POST /auth/register
  */
-export const register = async (
-  req: Request,
-  res: Response,
-  next: NextFunction
-): Promise<void> => {
+export const register = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
   try {
     const { email, password, firstName, lastName } = req.body;
-    console.log(req.body);
     const deviceInfo = req.deviceInfo as IDeviceInfo;
 
     if (!deviceInfo) {
       throw ApiError.internal(MESSAGES.AUTH.DEVICE_INFO_MISSING);
     }
 
-    const result = await authService.register(
-      { email, password, firstName, lastName },
-      deviceInfo
-    );
+    const result = await authService.register({ email, password, firstName, lastName }, deviceInfo);
 
     sendCreated(res, result, MESSAGES.AUTH.REGISTER_SUCCESS);
   } catch (error) {
@@ -39,11 +31,7 @@ export const register = async (
  * Login user
  * POST /auth/login
  */
-export const login = async (
-  req: Request,
-  res: Response,
-  next: NextFunction
-): Promise<void> => {
+export const login = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
   try {
     const { email, password } = req.body;
     const deviceInfo = req.deviceInfo as IDeviceInfo;
@@ -64,11 +52,7 @@ export const login = async (
  * Refresh access token
  * POST /auth/refresh
  */
-export const refresh = async (
-  req: Request,
-  res: Response,
-  next: NextFunction
-): Promise<void> => {
+export const refresh = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
   try {
     const { refreshToken } = req.body;
 
@@ -84,11 +68,7 @@ export const refresh = async (
  * Logout current session
  * POST /auth/logout
  */
-export const logout = async (
-  req: Request,
-  res: Response,
-  next: NextFunction
-): Promise<void> => {
+export const logout = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
   try {
     const sessionId = req.session?.id;
 
@@ -109,27 +89,20 @@ export const logout = async (
  * Logout all devices
  * POST /auth/logout-all
  */
-export const logoutAll = async (
-  req: Request,
-  res: Response,
-  next: NextFunction
-): Promise<void> => {
+export const logoutAll = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
   try {
     if (!req.user) {
       throw ApiError.unauthorized(MESSAGES.AUTH.NOT_AUTHENTICATED);
     }
 
     const currentSessionId = req.session?.id;
+    const userId = req.user && '_id' in req.user ? (req.user as any)._id : (req.user as any)._id;
     const count = await authService.logoutAllDevices(
-      req.user.id,
+      userId,
       currentSessionId // Keep current session active
     );
 
-    sendSuccess(
-      res,
-      { sessionsRevoked: count },
-      `Logged out from ${count} other device(s)`
-    );
+    sendSuccess(res, { sessionsRevoked: count }, `Logged out from ${count} other device(s)`);
   } catch (error) {
     next(error);
   }
@@ -149,7 +122,8 @@ export const getSessions = async (
       throw ApiError.unauthorized(MESSAGES.AUTH.NOT_AUTHENTICATED);
     }
 
-    const sessions = await authService.getActiveSessions(req.user.id);
+    const userId = req.user && '_id' in req.user ? (req.user as any)._id : (req.user as any)._id;
+    const sessions = await authService.getActiveSessions(userId);
 
     sendSuccess(res, { sessions, count: sessions.length });
   } catch (error) {
@@ -172,7 +146,8 @@ export const revokeSession = async (
     }
 
     const { sessionId } = req.params;
-    const revoked = await authService.revokeSession(req.user.id, sessionId);
+    const userId = req.user && '_id' in req.user ? (req.user as any)._id : (req.user as any)._id;
+    const revoked = await authService.revokeSession(userId, sessionId);
 
     if (!revoked) {
       throw ApiError.notFound(MESSAGES.AUTH.SESSION_NOT_FOUND);

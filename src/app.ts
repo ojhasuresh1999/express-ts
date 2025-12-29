@@ -6,6 +6,7 @@ import morgan from 'morgan';
 
 import config from './config';
 import routes from './routes';
+import passport from './config/passport';
 import { morganStream } from './utils/logger';
 import { errorHandler, notFoundHandler, defaultRateLimiter } from './middlewares';
 import { connectDB } from './config/database';
@@ -52,6 +53,7 @@ const createApp = (): Application => {
   app.set('trust proxy', 1);
 
   // API routes
+  app.use(passport.initialize());
   app.use(config.api.prefix, routes);
 
   // 404 handler

@@ -13,9 +13,6 @@ export interface AuthenticatedRequest extends Request {
     role: UserRole;
     isActive: boolean;
   };
-  session?: {
-    id: string;
-  };
   deviceInfo?: IDeviceInfo;
 }
 

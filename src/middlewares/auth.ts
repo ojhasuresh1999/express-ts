@@ -1,83 +1,61 @@
 import { Request, Response, NextFunction } from 'express';
+import passport from 'passport';
 import { ApiError } from '../utils/ApiError';
-import { verifyAccessToken, AccessTokenPayload } from '../services/token.service';
-import { User, UserRole } from '../models';
-import logger from '../utils/logger';
+import { UserRole } from '../models';
 import { MESSAGES } from '../constants/messages';
 
-/**
- * Extended request with authenticated user and session
- */
-declare global {
-  namespace Express {
-    interface Request {
-      user?: {
-        id: string;
-        email: string;
-        role: UserRole;
-        isActive: boolean;
-      };
-      session?: {
-        id: string;
-      };
-    }
-  }
-}
+
 
 /**
- * Authentication middleware
- * Verifies JWT access token and attaches user to request
+ * Passport JWT authentication middleware
+ * Uses passport's built-in JWT strategy
  */
-export const authenticate = async (
+export const authenticate = passport.authenticate('jwt', {
+  session: false,
+  failWithError: true,
+});
+
+/**
+ * Custom authentication middleware wrapper
+ * Handles passport errors and converts them to ApiError
+ */
+export const authMiddleware = async (
   req: Request,
-  _res: Response,
+  res: Response,
   next: NextFunction
 ): Promise<void> => {
-  try {
-    const authHeader = req.headers.authorization;
+  passport.authenticate(
+    'jwt',
+    { session: false },
+    async (err: Error | null, user: any, info: any) => {
+      try {
+        if (err) {
+          throw ApiError.internal(err.message);
+        }
 
-    if (!authHeader || !authHeader.startsWith('Bearer ')) {
-      throw ApiError.unauthorized(MESSAGES.AUTH.NO_TOKEN);
+        if (!user) {
+          throw ApiError.unauthorized(info?.message || MESSAGES.AUTH.INVALID_TOKEN);
+        }
+
+        // Check if user is active
+        if (!user.isActive) {
+          throw ApiError.forbidden(MESSAGES.AUTH.ACCOUNT_DEACTIVATED);
+        }
+
+        // Attach user to request
+        req.user = {
+          id: user._id.toString(),
+          email: user.email,
+          role: user.role,
+          isActive: user.isActive,
+        };
+
+        next();
+      } catch (error) {
+        next(error);
+      }
     }
-
-    const token = authHeader.split(' ')[1];
-
-    if (!token) {
-      throw ApiError.unauthorized(MESSAGES.AUTH.NO_TOKEN);
-    }
-
-    // Verify token
-    let payload: AccessTokenPayload;
-    try {
-      payload = await verifyAccessToken(token);
-    } catch (error) {
-      logger.debug(`Token verification failed: ${(error as Error).message}`);
-      throw ApiError.unauthorized(MESSAGES.AUTH.INVALID_TOKEN);
-    }
-
-    // Get user from database
-    const user = await User.findById(payload.userId);
-
-    if (!user) {
-      throw ApiError.unauthorized(MESSAGES.AUTH.USER_NOT_FOUND);
-    }
-
-    if (!user.isActive) {
-      throw ApiError.forbidden(MESSAGES.AUTH.ACCOUNT_DEACTIVATED);
-    }
-
-    // Attach user to request
-    req.user = {
-      id: user._id.toString(),
-      email: user.email,
-      role: user.role,
-      isActive: user.isActive,
-    };
-
-    next();
-  } catch (error) {
-    next(error);
-  }
+  )(req, res, next);
 };
 
 /**
@@ -90,16 +68,14 @@ export const authorize = (...allowedRoles: UserRole[]) => {
       return next(ApiError.unauthorized(MESSAGES.AUTH.NOT_AUTHENTICATED));
     }
 
+    const userRole = (req.user as any)?.role;
+
     if (allowedRoles.length === 0) {
       return next();
     }
 
-    if (!allowedRoles.includes(req.user.role)) {
-      return next(
-        ApiError.forbidden(
-          `Access denied. Required roles: ${allowedRoles.join(', ')}`
-        )
-      );
+    if (!allowedRoles.includes(userRole)) {
+      return next(ApiError.forbidden(`Access denied. Required roles: ${allowedRoles.join(', ')}`));
     }
 
     next();
@@ -112,42 +88,28 @@ export const authorize = (...allowedRoles: UserRole[]) => {
  */
 export const optionalAuth = async (
   req: Request,
-  _res: Response,
+  res: Response,
   next: NextFunction
 ): Promise<void> => {
-  try {
-    const authHeader = req.headers.authorization;
-
-    if (!authHeader || !authHeader.startsWith('Bearer ')) {
-      return next();
-    }
-
-    const token = authHeader.split(' ')[1];
-
-    if (!token) {
-      return next();
-    }
-
+  passport.authenticate('jwt', { session: false }, async (err: Error | null, user: any) => {
     try {
-      const payload = await verifyAccessToken(token);
-      const user = await User.findById(payload.userId);
-
-      if (user && user.isActive) {
-        req.user = {
-          id: user._id.toString(),
-          email: user.email,
-          role: user.role,
-          isActive: user.isActive,
-        };
+      // Errors are ignored for optional auth
+      if (user && !err) {
+        // Check if user is active
+        if (user.isActive) {
+          req.user = {
+            id: user._id.toString(),
+            email: user.email,
+            role: user.role,
+            isActive: user.isActive,
+          };
+        }
       }
-    } catch {
-      // Token invalid, but that's ok for optional auth
+      next();
+    } catch (error) {
+      next(error);
     }
-
-    next();
-  } catch (error) {
-    next(error);
-  }
+  })(req, res, next);
 };
 
 /**
@@ -173,4 +135,4 @@ export const authenticateRefreshToken = async (
   }
 };
 
-export default authenticate;
+export default authMiddleware;

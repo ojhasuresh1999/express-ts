@@ -15,6 +15,7 @@ export enum UserRole {
  */
 export interface IUser extends Document {
   _id: mongoose.Types.ObjectId;
+  id: string; // Virtual property for convenience
   email: string;
   password: string;
   firstName: string;
@@ -113,9 +114,7 @@ userSchema.pre('save', async function () {
 /**
  * Compare password with hashed password
  */
-userSchema.methods.comparePassword = async function (
-  candidatePassword: string
-): Promise<boolean> {
+userSchema.methods.comparePassword = async function (candidatePassword: string): Promise<boolean> {
   try {
     return await argon2.verify(this.password, candidatePassword);
   } catch {

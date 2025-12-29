@@ -1,4 +1,5 @@
-import { Request, Response, NextFunction } from 'express';
+import { Response, NextFunction, Request } from 'express';
+import { AuthenticatedRequest } from '../types';
 import { User, UserRole } from '../models';
 import { sendSuccess } from '../utils/response';
 import { ApiError } from '../utils/ApiError';
@@ -9,7 +10,7 @@ import { MESSAGES } from '../constants/messages';
  * GET /users/me
  */
 export const getMe = async (
-  req: Request,
+  req: AuthenticatedRequest,
   res: Response,
   next: NextFunction
 ): Promise<void> => {
@@ -35,7 +36,7 @@ export const getMe = async (
  * PATCH /users/me
  */
 export const updateMe = async (
-  req: Request,
+  req: AuthenticatedRequest,
   res: Response,
   next: NextFunction
 ): Promise<void> => {
@@ -77,7 +78,7 @@ export const updateMe = async (
  * GET /users
  */
 export const listUsers = async (
-  req: Request,
+  req: AuthenticatedRequest,
   res: Response,
   next: NextFunction
 ): Promise<void> => {
@@ -87,26 +88,16 @@ export const listUsers = async (
     const skip = (page - 1) * limit;
 
     const [users, total] = await Promise.all([
-      User.find()
-        .select('-password')
-        .skip(skip)
-        .limit(limit)
-        .sort({ createdAt: -1 }),
+      User.find().select('-password').skip(skip).limit(limit).sort({ createdAt: -1 }),
       User.countDocuments(),
     ]);
 
-    sendSuccess(
-      res,
-      { users },
-      undefined,
-      200,
-      {
-        page,
-        limit,
-        total,
-        totalPages: Math.ceil(total / limit),
-      }
-    );
+    sendSuccess(res, { users }, undefined, 200, {
+      page,
+      limit,
+      total,
+      totalPages: Math.ceil(total / limit),
+    });
   } catch (error) {
     next(error);
   }
@@ -152,11 +143,7 @@ export const updateUserRole = async (
       );
     }
 
-    const user = await User.findByIdAndUpdate(
-      req.params.id,
-      { role },
-      { new: true }
-    );
+    const user = await User.findByIdAndUpdate(req.params.id, { role }, { new: true });
 
     if (!user) {
       throw ApiError.notFound(MESSAGES.USER.NOT_FOUND);
@@ -178,11 +165,7 @@ export const deactivateUser = async (
   next: NextFunction
 ): Promise<void> => {
   try {
-    const user = await User.findByIdAndUpdate(
-      req.params.id,
-      { isActive: false },
-      { new: true }
-    );
+    const user = await User.findByIdAndUpdate(req.params.id, { isActive: false }, { new: true });
 
     if (!user) {
       throw ApiError.notFound(MESSAGES.USER.NOT_FOUND);
@@ -204,11 +187,7 @@ export const activateUser = async (
   next: NextFunction
 ): Promise<void> => {
   try {
-    const user = await User.findByIdAndUpdate(
-      req.params.id,
-      { isActive: true },
-      { new: true }
-    );
+    const user = await User.findByIdAndUpdate(req.params.id, { isActive: true }, { new: true });
 
     if (!user) {
       throw ApiError.notFound(MESSAGES.USER.NOT_FOUND);

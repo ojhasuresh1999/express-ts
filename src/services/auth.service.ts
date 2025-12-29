@@ -113,63 +113,57 @@ export const login = async (
   input: LoginInput,
   deviceInfo: IDeviceInfo
 ): Promise<AuthResult> => {
-  // Find user with password field
-  const user = await User.findOne({ email: input.email.toLowerCase() }).select(
-    '+password'
-  );
-
-  if (!user) {
-    throw ApiError.unauthorized(MESSAGES.AUTH.INVALID_CREDENTIALS);
-  }
-
-  // Check if user is active
-  if (!user.isActive) {
-    throw ApiError.forbidden(MESSAGES.AUTH.ACCOUNT_DEACTIVATED);
-  }
-
-  // Verify password
-  const isPasswordValid = await user.comparePassword(input.password);
-  if (!isPasswordValid) {
-    throw ApiError.unauthorized(MESSAGES.AUTH.INVALID_CREDENTIALS);
-  }
-
-  // Generate tokens
-  const accessToken = await generateAccessToken(user._id.toString(), user.role);
-
-  // Create session
-  const session = await Session.create({
-    userId: user._id,
-    refreshTokenHash: '', // Will be updated
-    deviceInfo,
-    expiresAt: getRefreshTokenExpiration(),
-  });
-
-  // Generate refresh token with session ID
-  const refreshToken = await generateRefreshToken(
-    user._id.toString(),
-    session._id.toString()
-  );
-
-  // Update session with token hash
-  session.refreshTokenHash = hashToken(refreshToken);
-  await session.save();
-
-  // Update last login
-  user.lastLoginAt = new Date();
-  await user.save();
-
-  logger.info(`User logged in: ${user.email} from ${deviceInfo.deviceName}`);
-
-  return {
-    user: user.toJSON(),
-    accessToken,
-    refreshToken,
-    session: {
-      id: session._id.toString(),
-      deviceInfo: session.deviceInfo,
-      expiresAt: session.expiresAt,
-    },
-  };
+ 
+    const user = await User.findOne({ email: input.email.toLowerCase() }).select(
+      '+password'
+    );
+  
+    if (!user) {
+      throw ApiError.unauthorized(MESSAGES.AUTH.INVALID_CREDENTIALS);
+    }
+  
+    if (!user.isActive) {
+      throw ApiError.forbidden(MESSAGES.AUTH.ACCOUNT_DEACTIVATED);
+    }
+  
+    const isPasswordValid = await user.comparePassword(input.password);
+    if (!isPasswordValid) {
+      throw ApiError.unauthorized(MESSAGES.AUTH.INVALID_CREDENTIALS);
+    }
+  
+    const accessToken = await generateAccessToken(user._id.toString(), user.role);
+  
+    const session = await Session.create({
+      userId: user._id,
+      refreshTokenHash: "",
+      deviceInfo,
+      expiresAt: getRefreshTokenExpiration(),
+    });
+  
+    const refreshToken = await generateRefreshToken(
+      user._id.toString(),
+      session._id.toString()
+    );
+  
+    session.refreshTokenHash = hashToken(refreshToken);
+    await session.save();
+  
+    user.lastLoginAt = new Date();
+    await user.save();
+  
+    logger.info(`User logged in: ${user.email} from ${deviceInfo.deviceName}`);
+  
+    return {
+      user: user.toJSON(),
+      accessToken,
+      refreshToken,
+      session: {
+        id: session._id.toString(),
+        deviceInfo: session.deviceInfo,
+        expiresAt: session.expiresAt,
+      },
+    };
+ 
 };
 
 /**

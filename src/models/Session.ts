@@ -4,12 +4,14 @@ import mongoose, { Document, Schema } from 'mongoose';
  * Device information interface
  */
 export interface IDeviceInfo {
+  deviceId: string; // deterministic identifier
   deviceName: string;
   deviceType: string;
   browser: string;
   os: string;
   ip: string;
 }
+
 
 /**
  * Session document interface
@@ -33,6 +35,7 @@ export interface ISession extends Document {
  */
 const deviceInfoSchema = new Schema<IDeviceInfo>(
   {
+    deviceId: { type: String, required: true },
     deviceName: {
       type: String,
       default: 'Unknown Device',
@@ -70,7 +73,7 @@ const sessionSchema = new Schema<ISession>(
     },
     refreshTokenHash: {
       type: String,
-      required: true,
+      default: null
     },
     deviceInfo: {
       type: deviceInfoSchema,
@@ -85,8 +88,7 @@ const sessionSchema = new Schema<ISession>(
     },
     expiresAt: {
       type: Date,
-      required: true,
-      index: true,
+      required: true
     },
     lastActivityAt: {
       type: Date,

@@ -79,8 +79,7 @@ const notificationSchema = new Schema<INotification>(
       default: Date.now,
     },
     expiresAt: {
-      type: Date,
-      index: true,
+      type: Date
     },
   },
   {

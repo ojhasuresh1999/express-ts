@@ -1,4 +1,5 @@
-import { Request, Response, NextFunction } from 'express';
+import { Response, NextFunction } from 'express';
+import { AuthenticatedRequest } from '../types';
 import { notificationService } from '../services/notification.service';
 import { sendSuccess, sendCreated } from '../utils/response';
 import { ApiError } from '../utils/ApiError';
@@ -9,7 +10,7 @@ import { NotificationType } from '../models/Notification';
  * POST /notifications/register-device
  */
 export const registerDevice = async (
-  req: Request,
+  req: AuthenticatedRequest,
   res: Response,
   next: NextFunction
 ): Promise<void> => {
@@ -42,7 +43,7 @@ export const registerDevice = async (
  * DELETE /notifications/register-device
  */
 export const unregisterDevice = async (
-  req: Request,
+  req: AuthenticatedRequest,
   res: Response,
   next: NextFunction
 ): Promise<void> => {
@@ -70,7 +71,7 @@ export const unregisterDevice = async (
  * GET /notifications
  */
 export const getNotifications = async (
-  req: Request,
+  req: AuthenticatedRequest,
   res: Response,
   next: NextFunction
 ): Promise<void> => {
@@ -109,7 +110,7 @@ export const getNotifications = async (
  * PATCH /notifications/:id/read
  */
 export const markAsRead = async (
-  req: Request,
+  req: AuthenticatedRequest,
   res: Response,
   next: NextFunction
 ): Promise<void> => {
@@ -136,7 +137,7 @@ export const markAsRead = async (
  * PATCH /notifications/read-all
  */
 export const markAllAsRead = async (
-  req: Request,
+  req: AuthenticatedRequest,
   res: Response,
   next: NextFunction
 ): Promise<void> => {
@@ -158,7 +159,7 @@ export const markAllAsRead = async (
  * DELETE /notifications/:id
  */
 export const deleteNotification = async (
-  req: Request,
+  req: AuthenticatedRequest,
   res: Response,
   next: NextFunction
 ): Promise<void> => {
@@ -185,7 +186,7 @@ export const deleteNotification = async (
  * POST /notifications/test
  */
 export const sendTestNotification = async (
-  req: Request,
+  req: AuthenticatedRequest,
   res: Response,
   next: NextFunction
 ): Promise<void> => {

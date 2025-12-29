@@ -1,36 +1,37 @@
 version: '3.8'
 
 services:
-  app:
-    build:
-      context: .
-      dockerfile: Dockerfile
-    container_name: ${APP_CONTAINER_NAME:-express-ts-api}
-    restart: unless-stopped
-    ports:
-      - '${APP_PORT:-3000}:3000'
-    environment:
-      - NODE_ENV=${NODE_ENV:-production}
-      - PORT=3000
-      - HOST=0.0.0.0
-      - API_PREFIX=${API_PREFIX:-/api}
-      - CORS_ORIGIN=${CORS_ORIGIN:-*}
-      - RATE_LIMIT_WINDOW_MS=${RATE_LIMIT_WINDOW_MS:-900000}
-      - RATE_LIMIT_MAX_REQUESTS=${RATE_LIMIT_MAX_REQUESTS:-100}
-      - LOG_LEVEL=${LOG_LEVEL:-info}
-      - MONGODB_URI=mongodb://mongo:27017/${MONGO_DB_NAME:-mydb}
-      - REDIS_URL=redis://redis:6379
-    volumes:
-      - ./logs:/app/logs
-    networks:
-      - app-network
-    depends_on:
-      - mongo
-      - redis
+  # app:
+  #   build:
+  #     context: .
+  #     dockerfile: Dockerfile
+  #   container_name: ${APP_CONTAINER_NAME:-express-ts-api}
+  #   restart: unless-stopped
+  #   ports:
+  #     - '${APP_PORT:-3000}:3000'
+  #   environment:
+  #     - NODE_ENV=${NODE_ENV:-production}
+  #     - PORT=3000
+  #     - HOST=0.0.0.0
+  #     - API_PREFIX=${API_PREFIX:-/api}
+  #     - CORS_ORIGIN=${CORS_ORIGIN:-*}
+  #     - RATE_LIMIT_WINDOW_MS=${RATE_LIMIT_WINDOW_MS:-900000}
+  #     - RATE_LIMIT_MAX_REQUESTS=${RATE_LIMIT_MAX_REQUESTS:-100}
+  #     - LOG_LEVEL=${LOG_LEVEL:-info}
+  #     - MONGODB_URI=mongodb://mongo:27017/${MONGO_DB_NAME:-mydb}
+  #     - REDIS_URL=redis://redis:6379
+  #   volumes:
+  #     - ./logs:/app/logs
+  #   networks:
+  #     - app-network
+  #   depends_on:
+  #     - mongo
+  #     - redis
 
   # MongoDB
   mongo:
-    image: mongo:${MONGO_VERSION:-7}
+    platform: linux/amd64
+    image: mongo:6.0
     container_name: ${MONGO_CONTAINER_NAME:-mongodb}
     restart: unless-stopped
     ports:
@@ -44,6 +45,7 @@ services:
 
   # Mongo Express - MongoDB GUI
   mongo-express:
+    platform: linux/amd64
     image: mongo-express:latest
     container_name: ${MONGO_EXPRESS_CONTAINER_NAME:-mongo-express}
     restart: unless-stopped
