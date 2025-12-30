@@ -6,6 +6,7 @@ import config from '../config';
  */
 export interface AccessTokenPayload extends JWTPayload {
   userId: string;
+  sessionId: string;
   role: string;
   type: 'access';
 }
@@ -55,12 +56,14 @@ export const getExpirationDate = (duration: string): Date => {
  */
 export const generateAccessToken = async (
   userId: string,
+  sessionId: string,
   role: string
 ): Promise<string> => {
   const secret = new TextEncoder().encode(config.jwt.accessSecret);
 
   const token = await new SignJWT({
     userId,
+    sessionId,
     role,
     type: 'access',
   } as AccessTokenPayload)

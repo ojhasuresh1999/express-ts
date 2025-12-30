@@ -71,7 +71,6 @@ export const register = async (
   });
 
   // Generate tokens
-  const accessToken = await generateAccessToken(user._id.toString(), user.role);
   const refreshToken = await generateRefreshToken(user._id.toString(), '');
 
   // Create session
@@ -81,6 +80,8 @@ export const register = async (
     deviceInfo,
     expiresAt: getRefreshTokenExpiration(),
   });
+
+  const accessToken = await generateAccessToken(user._id.toString(), session._id.toString(), user.role);
 
   // Update refresh token with session ID
   const finalRefreshToken = await generateRefreshToken(
@@ -130,15 +131,32 @@ export const login = async (
     if (!isPasswordValid) {
       throw ApiError.unauthorized(MESSAGES.AUTH.INVALID_CREDENTIALS);
     }
-  
-    const accessToken = await generateAccessToken(user._id.toString(), user.role);
-  
-    const session = await Session.create({
+
+    // Check for existing active session for this device
+    let session = await Session.findOne({
       userId: user._id,
-      refreshTokenHash: "",
-      deviceInfo,
-      expiresAt: getRefreshTokenExpiration(),
+      'deviceInfo.deviceId': deviceInfo.deviceId,
+      isRevoked: false,
+      expiresAt: { $gt: new Date() }
     });
+
+    if (session) {
+      // Update existing session
+      session.deviceInfo = deviceInfo;
+      session.expiresAt = getRefreshTokenExpiration();
+      session.lastActivityAt = new Date();
+      session.refreshTokenHash = ""; // Will be updated below
+    } else {
+      // Create new session
+      session = new Session({
+        userId: user._id,
+        refreshTokenHash: "",
+        deviceInfo,
+        expiresAt: getRefreshTokenExpiration(),
+      });
+    }
+  
+    const accessToken = await generateAccessToken(user._id.toString(), session._id.toString(), user.role);
   
     const refreshToken = await generateRefreshToken(
       user._id.toString(),
@@ -151,7 +169,7 @@ export const login = async (
     user.lastLoginAt = new Date();
     await user.save();
   
-    logger.info(`User logged in: ${user.email} from ${deviceInfo.deviceName}`);
+    logger.info(`User logged in: ${user.email} from ${deviceInfo.deviceName} (${session ? 'Session updated' : 'New session'})`);
   
     return {
       user: user.toJSON(),
@@ -205,7 +223,7 @@ export const refreshAccessToken = async (
   }
 
   // Generate new tokens (token rotation)
-  const newAccessToken = await generateAccessToken(user._id.toString(), user.role);
+  const newAccessToken = await generateAccessToken(user._id.toString(), session._id.toString(), user.role);
   const newRefreshToken = await generateRefreshToken(
     user._id.toString(),
     session._id.toString()

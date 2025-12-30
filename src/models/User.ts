@@ -1,5 +1,6 @@
 import mongoose, { Document, Schema } from 'mongoose';
 import * as argon2 from 'argon2';
+import { slugPlugin } from './plugins/slugPlugin';
 
 /**
  * User roles enum
@@ -16,6 +17,7 @@ export enum UserRole {
 export interface IUser extends Document {
   _id: mongoose.Types.ObjectId;
   id: string; // Virtual property for convenience
+  slug: string;
   email: string;
   password: string;
   firstName: string;
@@ -92,6 +94,12 @@ const userSchema = new Schema<IUser>(
     },
   }
 );
+
+// Apply slug plugin
+userSchema.plugin(slugPlugin, {
+  source: ['firstName', 'lastName'],
+  target: 'slug',
+});
 
 /**
  * Pre-save middleware to hash password

@@ -1,0 +1,117 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>OneSignal Notification Test</title>
+    <!-- OneSignal SDK -->
+    <script src="https://cdn.onesignal.com/sdks/web/v16/OneSignalSDK.page.js" defer></script>
+    <script>
+      window.OneSignalDeferred = window.OneSignalDeferred || [];
+      OneSignalDeferred.push(async function (OneSignal) {
+        await OneSignal.init({
+          appId: '34e9174b-c442-4a0b-96ed-e5edf127d7d6', // Replace with your App ID
+          notifyButton: {
+            enable: true,
+          },
+        });
+
+        console.log('OneSignal initialized');
+
+        // Get user ID (Subscription ID)
+        const id = await OneSignal.User.PushSubscription.id;
+        if (id) {
+          document.getElementById('playerId').textContent = id;
+          document.getElementById('status').textContent = 'Subscribed';
+          document.getElementById('status').className = 'status subscribed';
+        }
+
+        OneSignal.User.PushSubscription.addEventListener('change', (event) => {
+          if (event.current.id) {
+            document.getElementById('playerId').textContent = event.current.id;
+            document.getElementById('status').textContent = 'Subscribed';
+            document.getElementById('status').className = 'status subscribed';
+          } else {
+            document.getElementById('playerId').textContent = 'Not subscribed';
+            document.getElementById('status').textContent = 'Not Subscribed';
+            document.getElementById('status').className = 'status not-subscribed';
+          }
+        });
+      });
+    </script>
+    <style>
+      body {
+        font-family: -apple-system, system-ui, sans-serif;
+        max-width: 600px;
+        margin: 40px auto;
+        padding: 20px;
+        line-height: 1.6;
+      }
+      h1 {
+        border-bottom: 2px solid #eee;
+        padding-bottom: 10px;
+      }
+      .card {
+        background: #f9f9f9;
+        padding: 20px;
+        border-radius: 8px;
+        margin-top: 20px;
+        border: 1px solid #eee;
+      }
+      code {
+        background: #eee;
+        padding: 2px 6px;
+        border-radius: 4px;
+        font-weight: bold;
+      }
+      .status {
+        display: inline-block;
+        padding: 4px 8px;
+        border-radius: 4px;
+        color: white;
+        font-weight: bold;
+        font-size: 0.9em;
+      }
+      .subscribed {
+        background: #4caf50;
+      }
+      .not-subscribed {
+        background: #f44336;
+      }
+      button {
+        cursor: pointer;
+        background: #007bff;
+        color: white;
+        border: none;
+        padding: 10px 20px;
+        border-radius: 4px;
+        font-size: 16px;
+        margin-top: 10px;
+      }
+      button:hover {
+        background: #0056b3;
+      }
+    </style>
+  </head>
+  <body>
+    <h1>OneSignal Test</h1>
+    <p>This page tests the OneSignal Web Push SDK integration.</p>
+
+    <div class="card">
+      <h3>Status: <span id="status" class="status not-subscribed">Initializing...</span></h3>
+      <p>Player ID (Subscription ID): <br /><code id="playerId">Loading...</code></p>
+    </div>
+
+    <div class="card">
+      <h3>Configuration</h3>
+      <p>
+        Ensure you have replaced <code>YOUR_ONESIGNAL_APP_ID</code> in
+        <code>public/onesignal-test.html</code> with the ID from your .env file.
+      </p>
+      <p>
+        Also, ensure you have the <code>OneSignalSDKWorker.js</code> files in your public root (I
+        will create them for you now).
+      </p>
+    </div>
+  </body>
+</html>

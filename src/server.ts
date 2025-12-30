@@ -79,6 +79,7 @@ const startServer = async (): Promise<void> => {
 ║   ➤ URL: http://${config.host}:${config.port}${' '.repeat(Math.max(0, 34 - `${config.host}:${config.port}`.length))}║
 ║   ➤ API: http://${config.host}:${config.port}${config.api.prefix}${' '.repeat(Math.max(0, 34 - `${config.host}:${config.port}${config.api.prefix}`.length))}║
 ║   ➤ Health: http://${config.host}:${config.port}${config.api.prefix}/health${' '.repeat(Math.max(0, 27 - `${config.host}:${config.port}${config.api.prefix}`.length))}║
+║   ➤ Swagger: http://${config.host}:${config.port}/api-docs${' '.repeat(Math.max(0, 30 - `${config.host}:${config.port}/api-docs`.length))}║
 ║   ➤ Socket.IO: ws://${config.host}:${config.port}${config.socket.path}${' '.repeat(Math.max(0, 26 - `${config.host}:${config.port}${config.socket.path}`.length))}║
 ║                                                           ║
 ╚═══════════════════════════════════════════════════════════╝

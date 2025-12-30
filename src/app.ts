@@ -10,6 +10,8 @@ import passport from './config/passport';
 import { morganStream } from './utils/logger';
 import { errorHandler, notFoundHandler, defaultRateLimiter } from './middlewares';
 import { connectDB } from './config/database';
+import swaggerUi from 'swagger-ui-express';
+import { swaggerSpec } from './config/swagger';
 
 connectDB();
 
@@ -20,7 +22,30 @@ const createApp = (): Application => {
   const app = express();
 
   // Security middleware
-  app.use(helmet());
+  app.use(
+    helmet({
+      contentSecurityPolicy: {
+        directives: {
+          defaultSrc: ["'self'"],
+          scriptSrc: [
+            "'self'",
+            "'unsafe-inline'",
+            'https://cdn.onesignal.com',
+            'https://onesignal.com',
+            'https://api.onesignal.com',
+          ],
+          connectSrc: [
+            "'self'",
+            'https://onesignal.com',
+            'https://cdn.onesignal.com',
+            'https://api.onesignal.com',
+          ],
+          imgSrc: ["'self'", 'data:', 'https://cdn.onesignal.com', 'https://onesignal.com'],
+          frameSrc: ["'self'", 'https://onesignal.com', 'https://api.onesignal.com'],
+        },
+      },
+    })
+  );
   app.use(
     cors({
       origin: config.cors.origin,
@@ -40,6 +65,9 @@ const createApp = (): Application => {
   // Compression
   app.use(compression());
 
+  // Static files
+  app.use(express.static('public'));
+
   // HTTP request logging
   if (config.env !== 'test') {
     app.use(
@@ -51,6 +79,9 @@ const createApp = (): Application => {
 
   // Trust proxy (for rate limiting behind reverse proxy)
   app.set('trust proxy', 1);
+
+  // Swagger UI
+  app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerSpec));
 
   // API routes
   app.use(passport.initialize());
