@@ -6,63 +6,57 @@
     <title>OneSignal Notification Test</title>
     <!-- OneSignal SDK -->
     <script src="https://cdn.onesignal.com/sdks/web/v16/OneSignalSDK.page.js" defer></script>
-    <script>
-      window.OneSignalDeferred = window.OneSignalDeferred || [];
-      OneSignalDeferred.push(async function (OneSignal) {
-        await OneSignal.init({
-          appId: '34e9174b-c442-4a0b-96ed-e5edf127d7d6', // Replace with your App ID
-          notifyButton: {
-            enable: true,
-          },
-        });
-
-        console.log('OneSignal initialized');
-
-        // Get user ID (Subscription ID)
-        const id = await OneSignal.User.PushSubscription.id;
-        if (id) {
-          document.getElementById('playerId').textContent = id;
-          document.getElementById('status').textContent = 'Subscribed';
-          document.getElementById('status').className = 'status subscribed';
-        }
-
-        OneSignal.User.PushSubscription.addEventListener('change', (event) => {
-          if (event.current.id) {
-            document.getElementById('playerId').textContent = event.current.id;
-            document.getElementById('status').textContent = 'Subscribed';
-            document.getElementById('status').className = 'status subscribed';
-          } else {
-            document.getElementById('playerId').textContent = 'Not subscribed';
-            document.getElementById('status').textContent = 'Not Subscribed';
-            document.getElementById('status').className = 'status not-subscribed';
-          }
-        });
-      });
-    </script>
     <style>
       body {
         font-family: -apple-system, system-ui, sans-serif;
-        max-width: 600px;
+        max-width: 800px;
         margin: 40px auto;
         padding: 20px;
         line-height: 1.6;
+        background-color: #f4f6f8;
       }
       h1 {
-        border-bottom: 2px solid #eee;
+        border-bottom: 2px solid #ddd;
         padding-bottom: 10px;
+        color: #333;
       }
       .card {
-        background: #f9f9f9;
-        padding: 20px;
+        background: #fff;
+        padding: 25px;
         border-radius: 8px;
         margin-top: 20px;
-        border: 1px solid #eee;
+        box-shadow: 0 2px 5px rgba(0, 0, 0, 0.05);
+      }
+      .input-group {
+        margin-bottom: 15px;
+      }
+      label {
+        display: block;
+        margin-bottom: 5px;
+        font-weight: 500;
+        color: #555;
+      }
+      input[type='text'],
+      input[type='password'],
+      textarea,
+      select {
+        width: 100%;
+        padding: 10px;
+        border: 1px solid #ddd;
+        border-radius: 4px;
+        font-family: inherit;
+        box-sizing: border-box;
+      }
+      textarea {
+        resize: vertical;
+        min-height: 80px;
       }
       code {
         background: #eee;
         padding: 2px 6px;
         border-radius: 4px;
         font-weight: bold;
+        color: #d63384;
       }
       .status {
         display: inline-block;
@@ -78,40 +72,320 @@
       .not-subscribed {
         background: #f44336;
       }
+
       button {
         cursor: pointer;
-        background: #007bff;
-        color: white;
-        border: none;
         padding: 10px 20px;
         border-radius: 4px;
         font-size: 16px;
-        margin-top: 10px;
+        border: none;
+        transition: background-color 0.2s;
+        margin-right: 10px;
+        margin-bottom: 10px;
       }
-      button:hover {
+      .btn-primary {
+        background: #007bff;
+        color: white;
+      }
+      .btn-primary:hover {
         background: #0056b3;
+      }
+      .btn-success {
+        background: #28a745;
+        color: white;
+      }
+      .btn-success:hover {
+        background: #218838;
+      }
+      .btn-danger {
+        background: #dc3545;
+        color: white;
+      }
+      .btn-danger:hover {
+        background: #c82333;
+      }
+
+      #logs {
+        background: #2d2d2d;
+        color: #f8f8f2;
+        padding: 15px;
+        border-radius: 4px;
+        font-family: monospace;
+        height: 300px;
+        overflow-y: auto;
+        white-space: pre-wrap;
+        font-size: 13px;
+      }
+      .log-time {
+        color: #888;
+        margin-right: 10px;
+      }
+      .log-info {
+        color: #66d9ef;
+      }
+      .log-success {
+        color: #a6e22e;
+      }
+      .log-error {
+        color: #f92672;
       }
     </style>
   </head>
   <body>
-    <h1>OneSignal Test</h1>
-    <p>This page tests the OneSignal Web Push SDK integration.</p>
+    <h1>OneSignal Notification Test</h1>
 
     <div class="card">
-      <h3>Status: <span id="status" class="status not-subscribed">Initializing...</span></h3>
-      <p>Player ID (Subscription ID): <br /><code id="playerId">Loading...</code></p>
+      <h3>1. Configuration</h3>
+      <div class="input-group">
+        <label for="appId">OneSignal App ID (from .env):</label>
+        <input
+          type="text"
+          id="appId"
+          value="34e9174b-c442-4a0b-96ed-e5edf127d7d6"
+          placeholder="Enter OneSignal App ID"
+        />
+      </div>
+      <div class="input-group">
+        <label for="authToken">Auth Token (Bearer - without 'Bearer ' prefix):</label>
+        <textarea id="authToken" placeholder="Paste your JWT access token here"></textarea>
+      </div>
+      <button id="initOneSignalBtn" class="btn-primary">Initialize / Re-init OneSignal</button>
     </div>
 
     <div class="card">
-      <h3>Configuration</h3>
-      <p>
-        Ensure you have replaced <code>YOUR_ONESIGNAL_APP_ID</code> in
-        <code>public/onesignal-test.html</code> with the ID from your .env file.
-      </p>
-      <p>
-        Also, ensure you have the <code>OneSignalSDKWorker.js</code> files in your public root (I
-        will create them for you now).
-      </p>
+      <h3>2. OneSignal Status</h3>
+      <p>Status: <span id="status" class="status not-subscribed">Not Initialized</span></p>
+      <p>Player ID: <code id="playerId">Waiting...</code></p>
+      <div class="input-group">
+        <button id="registerDeviceBtn" class="btn-success">Register Device w/ Backend</button>
+        <button id="unregisterDeviceBtn" class="btn-danger">Unregister Device w/ Backend</button>
+      </div>
     </div>
+
+    <div class="card">
+      <h3>3. Send Test Notification</h3>
+
+      <div class="input-group">
+        <label for="notifType">Notification Type:</label>
+        <select id="notifType">
+          <option value="system">System</option>
+          <option value="message">Message</option>
+          <option value="alert">Alert</option>
+          <option value="promotion">Promotion</option>
+          <option value="update">Update</option>
+        </select>
+      </div>
+
+      <div class="input-group">
+        <label for="notifTitle">Title:</label>
+        <input type="text" id="notifTitle" value="Test Notification" />
+      </div>
+
+      <div class="input-group">
+        <label for="notifBody">Body:</label>
+        <input
+          type="text"
+          id="notifBody"
+          value="Hello! This is a test from the newly connected HTML page."
+        />
+      </div>
+
+      <button id="sendTestNotificationBtn" class="btn-primary">Send Test Notification</button>
+    </div>
+
+    <div class="card">
+      <h3>Logs</h3>
+      <div id="logs"></div>
+      <button id="clearLogsBtn" style="margin-top: 10px; font-size: 12px; padding: 5px 10px">
+        Clear Logs
+      </button>
+    </div>
+
+    <script>
+      // Helper function for logging
+      function log(message, type = 'info') {
+        const logsDiv = document.getElementById('logs');
+        const entry = document.createElement('div');
+        const time = new Date().toLocaleTimeString();
+        entry.innerHTML = `<span class="log-time">[${time}]</span> <span class="log-${type}">${message}</span>`;
+        logsDiv.prepend(entry);
+        console.log(`[${type.toUpperCase()}] ${message}`);
+      }
+
+      // API Helper
+      async function callApi(endpoint, method, body = null) {
+        const token = document.getElementById('authToken').value.trim();
+        if (!token) {
+          log('Error: Auth Token is required', 'error');
+          alert('Please enter an Auth Token first');
+          return null;
+        }
+
+        try {
+          const headers = {
+            'Content-Type': 'application/json',
+            Authorization: `Bearer ${token}`,
+          };
+
+          const options = { method, headers };
+          if (body) options.body = JSON.stringify(body);
+
+          log(`Calling ${method} /api/notifications${endpoint}...`);
+          const response = await fetch(`/api/notifications${endpoint}`, options);
+          const data = await response.json();
+
+          if (!response.ok) {
+            throw new Error(data.message || `HTTP ${response.status}`);
+          }
+
+          log(`Success: ${JSON.stringify(data)}`, 'success');
+          return data;
+        } catch (error) {
+          log(`API Error: ${error.message}`, 'error');
+          return null;
+        }
+      }
+
+      // OneSignal Logic
+      let currentPlayerId = null;
+
+      async function initOneSignal() {
+        const appId = document.getElementById('appId').value.trim();
+        console.log('🚀 ~ initOneSignal ~ appId:', appId);
+        if (!appId) {
+          log('Error: App ID is required', 'error');
+          return;
+        }
+
+        try {
+          window.OneSignalDeferred = window.OneSignalDeferred || [];
+          OneSignalDeferred.push(async function (OneSignal) {
+            log('Initializing OneSignal...');
+
+            await OneSignal.init({
+              appId: appId,
+              notifyButton: { enable: true },
+            });
+
+            log('OneSignal initialized successfully', 'success');
+
+            // Check subscription status
+            // Wait a moment for OneSignal to be ready
+            setTimeout(async () => {
+              const id = OneSignal.User.PushSubscription.id;
+              const optedIn = OneSignal.User.PushSubscription.optedIn;
+              updateStatus(id, optedIn);
+            }, 1000);
+
+            // Listen for changes
+            OneSignal.User.PushSubscription.addEventListener('change', (event) => {
+              log('OneSignal Subscription Changed: ' + JSON.stringify(event));
+              updateStatus(event.current.id, event.current.optedIn);
+            });
+          });
+        } catch (e) {
+          log('OneSignal Init Failed: ' + e.message, 'error');
+        }
+      }
+
+      document.getElementById('initOneSignalBtn').addEventListener('click', initOneSignal);
+
+      function updateStatus(id, optedIn) {
+        currentPlayerId = id;
+        const statusEl = document.getElementById('status');
+        const idEl = document.getElementById('playerId');
+
+        if (id && optedIn) {
+          statusEl.textContent = 'Subscribed';
+          statusEl.className = 'status subscribed';
+          idEl.textContent = id;
+          log('Device Subscribed. ID: ' + id, 'success');
+        } else {
+          statusEl.textContent = optedIn ? 'Subscribed (No ID yet)' : 'Not Subscribed';
+          statusEl.className = 'status ' + (optedIn ? 'subscribed' : 'not-subscribed');
+          idEl.textContent = id || 'N/A';
+        }
+      }
+
+      // Backend Actions
+      async function registerDevice() {
+        if (!currentPlayerId) {
+          log('Error: OneSignal Player ID is missing. Subscribe first.', 'error');
+          return;
+        }
+        await callApi('/register-device', 'POST', { pushToken: currentPlayerId });
+      }
+      document.getElementById('registerDeviceBtn').addEventListener('click', registerDevice);
+
+      async function unregisterDevice() {
+        await callApi('/register-device', 'DELETE');
+      }
+      document.getElementById('unregisterDeviceBtn').addEventListener('click', unregisterDevice);
+
+      const NOTIFICATION_META = {
+        system: {
+          imageUrl: 'https://images.unsplash.com/photo-1581091870627-3a3c0f5fd37c',
+          icon: '⚙️',
+          cta: 'View System Status',
+        },
+        message: {
+          imageUrl: 'https://images.unsplash.com/photo-1525182008055-f88b95ff7980',
+          icon: '💬',
+          cta: 'Open Messages',
+        },
+        alert: {
+          imageUrl: 'https://images.unsplash.com/photo-1500530855697-b586d89ba3ee',
+          icon: '🚨',
+          cta: 'View Alert',
+        },
+        promotion: {
+          imageUrl: 'https://images.unsplash.com/photo-1520975916090-3105956dac38',
+          icon: '🎉',
+          cta: 'Claim Offer',
+        },
+        update: {
+          imageUrl: 'https://images.unsplash.com/photo-1519681393784-d120267933ba',
+          icon: '⬆️',
+          cta: 'View Update',
+        },
+      };
+
+      async function sendTestNotification() {
+        const title = document.getElementById('notifTitle').value;
+        const body = document.getElementById('notifBody').value;
+        const type = document.getElementById('notifType').value;
+
+        const meta = NOTIFICATION_META[type];
+
+        await callApi('/test', 'POST', {
+          title: `${meta.icon} ${title}`,
+          body,
+          type,
+          imageUrl: meta.imageUrl,
+          actionUrl: '/notifications',
+          data: {
+            variant: type,
+            ctaText: meta.cta,
+            sentFrom: 'onesignal-test.html',
+            timestamp: Date.now(),
+          },
+        });
+      }
+
+      document
+        .getElementById('sendTestNotificationBtn')
+        .addEventListener('click', sendTestNotification);
+
+      // Auto-init if App ID is present (optional, delayed)
+      setTimeout(() => {
+        if (document.getElementById('appId').value) {
+          log('Ready to initialize. Click the button or configure App ID.');
+        }
+      }, 1000);
+
+      document.getElementById('clearLogsBtn').addEventListener('click', () => {
+        document.getElementById('logs').innerHTML = '';
+      });
+    </script>
   </body>
 </html>

@@ -198,10 +198,26 @@ export const sendTestNotification = async (
     const { title, body, type } = req.body;
 
     const notification = await notificationService.notifyUser(req.user.id, {
-      title: title || 'Test Notification',
-      body: body || 'This is a test notification from your server.',
-      type: type || NotificationType.SYSTEM,
-      data: { test: true, timestamp: Date.now() },
+      title: title || '✨ New Feature Unlocked!',
+      body: body || 'Your account now has access to advanced analytics and real-time alerts.',
+      type: type || NotificationType.ALERT,
+
+      imageUrl: 'https://images.unsplash.com/photo-1520975916090-3105956dac38',
+
+      actionUrl: 'https://yourapp.com/dashboard/analytics',
+
+      data: {
+        variant: 'premium',
+        theme: 'gold',
+        icon: '🚀',
+        ctaText: 'View Dashboard',
+        highlight: true,
+        timestamp: Date.now(),
+      },
+
+      saveToDb: true,
+      sendPush: true,
+      sendSocket: true,
     });
 
     sendCreated(res, notification, 'Test notification sent');

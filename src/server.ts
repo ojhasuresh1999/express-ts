@@ -4,6 +4,7 @@ import config from './config';
 import logger from './utils/logger';
 import { handleUncaughtException, handleUnhandledRejection } from './middlewares/errorHandler';
 import mongoose from 'mongoose';
+import { connectDB } from './config/database';
 import { redisService } from './services/redis.service';
 import { socketService } from './services/socket.service';
 
@@ -60,6 +61,9 @@ process.on('SIGINT', () => gracefulShutdown('SIGINT'));
  */
 const startServer = async (): Promise<void> => {
   try {
+    // Connect to MongoDB
+    await connectDB();
+
     // Initialize Redis
     await redisService.connect();
     logger.info('Redis connected');

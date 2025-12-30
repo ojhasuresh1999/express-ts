@@ -4,8 +4,6 @@ import { ApiError } from '../utils/ApiError';
 import { UserRole } from '../models';
 import { MESSAGES } from '../constants/messages';
 
-
-
 /**
  * Passport JWT authentication middleware
  * Uses passport's built-in JWT strategy

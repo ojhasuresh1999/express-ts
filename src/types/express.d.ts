@@ -1,4 +1,5 @@
 import { UserRole } from '../models/User';
+import { ISession } from '../models/Session';
 
 declare global {
   namespace Express {
@@ -7,6 +8,10 @@ declare global {
       email: string;
       role: UserRole;
       isActive: boolean;
+    }
+
+    interface Request {
+      session?: ISession;
     }
   }
 }

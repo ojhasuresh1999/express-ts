@@ -104,6 +104,7 @@ class NotificationService {
           logger.debug(`Push notification sent to ${pushTokens.length} devices for user ${userId}`);
         }
       } catch (error) {
+        console.log("🚀 ~ NotificationService ~ notifyUser ~ error:", error)
         logger.error('Failed to send push notification:', error);
       }
     }

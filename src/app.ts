@@ -9,11 +9,8 @@ import routes from './routes';
 import passport from './config/passport';
 import { morganStream } from './utils/logger';
 import { errorHandler, notFoundHandler, defaultRateLimiter } from './middlewares';
-import { connectDB } from './config/database';
 import swaggerUi from 'swagger-ui-express';
 import { swaggerSpec } from './config/swagger';
-
-connectDB();
 
 /**
  * Create and configure Express application

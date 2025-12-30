@@ -15,23 +15,27 @@ passport.use(
       jwtFromRequest: ExtractJwt.fromAuthHeaderAsBearerToken(),
       secretOrKey: config.jwt.accessSecret,
       algorithms: ['HS256'],
+      passReqToCallback: true,
     },
-    async (payload: any, done) => {
+    async (req: any, payload: any, done) => {
       try {
         // 1. Verify Session
         if (!payload.sessionId) {
-            return done(null, false, { message: 'Invalid token: missing session ID' });
+          return done(null, false, { message: 'Invalid token: missing session ID' });
         }
 
         const session = await Session.findById(payload.sessionId);
         if (!session || session.isRevoked) {
-             return done(null, false, { message: 'Session expired or revoked' });
+          return done(null, false, { message: 'Session expired or revoked' });
         }
 
-         // Optional: Check if session belongs to user (should match)
-         if (session.userId.toString() !== payload.userId) {
-             return done(null, false, { message: 'Invalid session for user' });
-         }
+        // Optional: Check if session belongs to user (should match)
+        if (session.userId.toString() !== payload.userId) {
+          return done(null, false, { message: 'Invalid session for user' });
+        }
+
+        // Attach session to request
+        req.session = session;
 
         // 2. Verify User
         // Payload contains userId from token

@@ -12,13 +12,13 @@ export interface IDeviceInfo {
   ip: string;
 }
 
-
 /**
  * Session document interface
  */
 export interface ISession extends Document {
   _id: mongoose.Types.ObjectId;
   userId: mongoose.Types.ObjectId;
+  id: string;
   refreshTokenHash: string;
   deviceInfo: IDeviceInfo;
   pushToken?: string; // OneSignal player ID for push notifications
@@ -73,7 +73,7 @@ const sessionSchema = new Schema<ISession>(
     },
     refreshTokenHash: {
       type: String,
-      default: null
+      default: null,
     },
     deviceInfo: {
       type: deviceInfoSchema,
@@ -88,7 +88,7 @@ const sessionSchema = new Schema<ISession>(
     },
     expiresAt: {
       type: Date,
-      required: true
+      required: true,
     },
     lastActivityAt: {
       type: Date,
