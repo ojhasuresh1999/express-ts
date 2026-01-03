@@ -60,7 +60,7 @@ const createApp = (): Application => {
   app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 
   // Compression
-  app.use(compression());
+  app.use(compression() as unknown as express.RequestHandler);
 
   // Static files
   app.use(express.static('public'));
@@ -78,10 +78,10 @@ const createApp = (): Application => {
   app.set('trust proxy', 1);
 
   // Swagger UI
-  app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerSpec));
+  app.use('/api-docs', swaggerUi.serve as unknown as express.RequestHandler[], swaggerUi.setup(swaggerSpec) as unknown as express.RequestHandler);
 
   // API routes
-  app.use(passport.initialize());
+  app.use(passport.initialize() as unknown as express.RequestHandler);
   app.use(config.api.prefix, routes);
 
   // 404 handler
