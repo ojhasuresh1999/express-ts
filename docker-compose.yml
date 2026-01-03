@@ -29,37 +29,37 @@ services:
   #     - redis
 
   # MongoDB
-  mongo:
-    platform: linux/amd64
-    image: mongo:6.0
-    container_name: ${MONGO_CONTAINER_NAME:-mongodb}
-    restart: unless-stopped
-    ports:
-      - '${MONGO_PORT:-27017}:27017'
-    environment:
-      - MONGO_INITDB_DATABASE=${MONGO_DB_NAME:-mydb}
-    volumes:
-      - mongo-data:/data/db
-    networks:
-      - app-network
+  # mongo:
+  #   platform: linux/amd64
+  #   image: mongo:6.0
+  #   container_name: ${MONGO_CONTAINER_NAME:-mongodb}
+  #   restart: unless-stopped
+  #   ports:
+  #     - '${MONGO_PORT:-27017}:27017'
+  #   environment:
+  #     - MONGO_INITDB_DATABASE=${MONGO_DB_NAME:-mydb}
+  #   volumes:
+  #     - mongo-data:/data/db
+  #   networks:
+  #     - app-network
 
   # Mongo Express - MongoDB GUI
-  mongo-express:
-    platform: linux/amd64
-    image: mongo-express:latest
-    container_name: ${MONGO_EXPRESS_CONTAINER_NAME:-mongo-express}
-    restart: unless-stopped
-    ports:
-      - '${MONGO_EXPRESS_PORT:-8081}:8081'
-    environment:
-      - ME_CONFIG_MONGODB_SERVER=${MONGO_CONTAINER_NAME:-mongodb}
-      - ME_CONFIG_MONGODB_PORT=27017
-      - ME_CONFIG_BASICAUTH_USERNAME=${MONGO_EXPRESS_USER:-admin}
-      - ME_CONFIG_BASICAUTH_PASSWORD=${MONGO_EXPRESS_PASSWORD:-admin123}
-    depends_on:
-      - mongo
-    networks:
-      - app-network
+  # mongo-express:
+  #   platform: linux/amd64
+  #   image: mongo-express:latest
+  #   container_name: ${MONGO_EXPRESS_CONTAINER_NAME:-mongo-express}
+  #   restart: unless-stopped
+  #   ports:
+  #     - '${MONGO_EXPRESS_PORT:-8081}:8081'
+  #   environment:
+  #     - ME_CONFIG_MONGODB_SERVER=${MONGO_CONTAINER_NAME:-mongodb}
+  #     - ME_CONFIG_MONGODB_PORT=27017
+  #     - ME_CONFIG_BASICAUTH_USERNAME=${MONGO_EXPRESS_USER:-admin}
+  #     - ME_CONFIG_BASICAUTH_PASSWORD=${MONGO_EXPRESS_PASSWORD:-admin123}
+  #   depends_on:
+  #     - mongo
+  #   networks:
+  #     - app-network
 
   # Redis
   redis:

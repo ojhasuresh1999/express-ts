@@ -129,10 +129,58 @@
       .log-error {
         color: #f92672;
       }
+      .tab-btn {
+        cursor: pointer;
+        font-size: 16px;
+      }
+      .tab-btn.active {
+        color: #007bff;
+        border-bottom: 2px solid #007bff;
+      }
     </style>
   </head>
   <body>
     <h1>OneSignal Notification Test</h1>
+
+    <div class="card">
+      <h3>Authentication</h3>
+      <div style="margin-bottom: 20px; border-bottom: 1px solid #ddd; display: flex">
+        <div id="tabLogin" class="tab-btn active" style="padding: 10px 20px; font-weight: bold">
+          Login
+        </div>
+        <div id="tabRegister" class="tab-btn" style="padding: 10px 20px; color: #666">Register</div>
+      </div>
+
+      <form id="authForm">
+        <div id="registerFields" style="display: none">
+          <div class="input-group">
+            <label for="regFirstName">First Name:</label>
+            <input type="text" id="regFirstName" placeholder="John" />
+          </div>
+          <div class="input-group">
+            <label for="regLastName">Last Name:</label>
+            <input type="text" id="regLastName" placeholder="Doe" />
+          </div>
+        </div>
+
+        <div class="input-group">
+          <label for="authEmail">Email:</label>
+          <input type="text" id="authEmail" placeholder="user@example.com" autocomplete="email" />
+        </div>
+
+        <div class="input-group">
+          <label for="authPassword">Password:</label>
+          <input
+            type="password"
+            id="authPassword"
+            placeholder="********"
+            autocomplete="current-password"
+          />
+        </div>
+
+        <button type="submit" id="authSubmitBtn" class="btn-primary">Login</button>
+      </form>
+    </div>
 
     <div class="card">
       <h3>1. Configuration</h3>
@@ -385,6 +433,111 @@
 
       document.getElementById('clearLogsBtn').addEventListener('click', () => {
         document.getElementById('logs').innerHTML = '';
+      });
+
+      // Authentication Logic
+      const tabLogin = document.getElementById('tabLogin');
+      const tabRegister = document.getElementById('tabRegister');
+      const registerFields = document.getElementById('registerFields');
+      const authSubmitBtn = document.getElementById('authSubmitBtn');
+      const authForm = document.getElementById('authForm');
+      let isRegisterMode = false;
+
+      function toggleAuthMode(mode) {
+        isRegisterMode = mode === 'register';
+        if (isRegisterMode) {
+          tabLogin.className = 'tab-btn';
+          tabLogin.style.color = '#666';
+          tabLogin.style.borderBottom = 'none';
+
+          tabRegister.className = 'tab-btn active';
+          tabRegister.style.color = '#007bff';
+          tabRegister.style.borderBottom = '2px solid #007bff';
+
+          registerFields.style.display = 'block';
+          authSubmitBtn.textContent = 'Register';
+        } else {
+          tabLogin.className = 'tab-btn active';
+          tabLogin.style.color = '#007bff';
+          tabLogin.style.borderBottom = '2px solid #007bff';
+
+          tabRegister.className = 'tab-btn';
+          tabRegister.style.color = '#666';
+          tabRegister.style.borderBottom = 'none';
+
+          registerFields.style.display = 'none';
+          authSubmitBtn.textContent = 'Login';
+        }
+      }
+
+      tabLogin.addEventListener('click', () => toggleAuthMode('login'));
+      tabRegister.addEventListener('click', () => toggleAuthMode('register'));
+
+      authForm.addEventListener('submit', async (e) => {
+        e.preventDefault();
+
+        const email = document.getElementById('authEmail').value.trim();
+        const password = document.getElementById('authPassword').value;
+        const firstName = document.getElementById('regFirstName').value.trim();
+        const lastName = document.getElementById('regLastName').value.trim();
+
+        if (!email || !password) {
+          log('Error: Email and Password are required', 'error');
+          return;
+        }
+
+        if (isRegisterMode && (!firstName || !lastName)) {
+          log('Error: First Name and Last Name are required for registration', 'error');
+          return;
+        }
+
+        const endpoint = isRegisterMode ? '/api/auth/register' : '/api/auth/login';
+        const body = { email, password };
+
+        if (isRegisterMode) {
+          body.firstName = firstName;
+          body.lastName = lastName;
+        }
+
+        try {
+          const headers = { 'Content-Type': 'application/json' };
+          log(`Authenticating via ${endpoint}...`);
+
+          const response = await fetch(endpoint, {
+            method: 'POST',
+            headers,
+            body: JSON.stringify(body),
+          });
+
+          const data = await response.json();
+
+          if (!response.ok) {
+            throw new Error(data.message || `HTTP ${response.status}`);
+          }
+
+          log(`Authentication Successful!`, 'success');
+
+          if (data.data && data.data.accessToken) {
+            const token = data.data.accessToken;
+            document.getElementById('authToken').value = token;
+
+            // Save to localStorage for convenience
+            localStorage.setItem('oneSignalTestAuthToken', token);
+
+            log('Token automatically populated and saved to localStorage.', 'success');
+          }
+        } catch (error) {
+          log(`Authentication Failed: ${error.message}`, 'error');
+        }
+      });
+
+      // Load token from localStorage on load
+      window.addEventListener('DOMContentLoaded', () => {
+        const savedToken = localStorage.getItem('oneSignalTestAuthToken');
+        if (savedToken) {
+          document.getElementById('authToken').value = savedToken;
+          log('Loaded saved auth token from localStorage.');
+        }
       });
     </script>
   </body>
