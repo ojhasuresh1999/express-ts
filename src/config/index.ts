@@ -48,7 +48,8 @@ interface Config {
 const config: Config = {
   env: process.env.NODE_ENV || 'development',
   port: parseInt(process.env.PORT || '3000', 10),
-  host: process.env.HOST || 'localhost',
+  // host: process.env.HOST || 'localhost',
+  host: process.env.HOST || '0.0.0.0',
   api: {
     prefix: process.env.API_PREFIX || '/api',
     version: process.env.API_VERSION || 'v1',
