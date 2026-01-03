@@ -65,7 +65,10 @@ class SocketService {
     // Authentication middleware
     this.io.use(async (socket: AuthenticatedSocket, next) => {
       try {
-        const token = socket.handshake.auth.token || socket.handshake.headers.authorization?.replace('Bearer ', '');
+        const token =
+          socket.handshake.auth.token ||
+          socket.handshake.headers.authorization?.replace('Bearer ', '') ||
+          socket.handshake.query.token;
 
         if (!token) {
           return next(new Error(MESSAGES.SERVER.AUTH_REQUIRED));

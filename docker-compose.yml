@@ -71,9 +71,24 @@ services:
     networks:
       - app-network
 
+  # Redis Insight
+  redis-insight:
+    image: redis/redisinsight:latest
+    container_name: ${REDIS_INSIGHT_CONTAINER_NAME:-redis-insight}
+    restart: unless-stopped
+    ports:
+      - '${REDIS_INSIGHT_PORT:-8082}:5540'
+    networks:
+      - app-network
+    depends_on:
+      - redis
+    environment:
+      - REDIS_HOST=redis
+      - REDIS_PORT=6379    
+
 networks:
   app-network:
     driver: bridge
 
-volumes:
-  mongo-data:
+# volumes:
+#   mongo-data:
