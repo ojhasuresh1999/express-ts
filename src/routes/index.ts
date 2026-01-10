@@ -3,6 +3,7 @@ import healthRoutes from './health.routes';
 import authRoutes from './auth.routes';
 import userRoutes from './user.routes';
 import notificationRoutes from './notification.routes';
+import uploadRoutes from './upload.routes';
 
 const router: RouterType = Router();
 
@@ -17,5 +18,8 @@ router.use('/users', userRoutes);
 
 // Notification routes
 router.use('/notifications', notificationRoutes);
+
+// Upload routes
+router.use('/upload', uploadRoutes);
 
 export default router;

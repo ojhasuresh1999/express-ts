@@ -14,8 +14,9 @@ import { swaggerSpec } from './config/swagger';
 
 /**
  * Create and configure Express application
+ * @param beforeErrorHandlers - Optional callback to register routes before error handlers
  */
-const createApp = (): Application => {
+const createApp = (beforeErrorHandlers?: (app: Application) => void): Application => {
   const app = express();
 
   // Security middleware
@@ -30,6 +31,7 @@ const createApp = (): Application => {
             'https://cdn.onesignal.com',
             'https://onesignal.com',
             'https://api.onesignal.com',
+            'https://cdn.jsdelivr.net',
           ],
           connectSrc: [
             "'self'",
@@ -37,7 +39,14 @@ const createApp = (): Application => {
             'https://cdn.onesignal.com',
             'https://api.onesignal.com',
           ],
-          imgSrc: ["'self'", 'data:', 'https://cdn.onesignal.com', 'https://onesignal.com'],
+          imgSrc: [
+            "'self'",
+            'data:',
+            'https://cdn.onesignal.com',
+            'https://onesignal.com',
+            'https://res.cloudinary.com',
+          ],
+          mediaSrc: ["'self'", 'https://res.cloudinary.com'],
           frameSrc: ["'self'", 'https://onesignal.com', 'https://api.onesignal.com'],
         },
       },
@@ -47,8 +56,25 @@ const createApp = (): Application => {
     cors({
       origin: config.cors.origin,
       credentials: true,
-      methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
-      allowedHeaders: ['Content-Type', 'Authorization'],
+      methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS', 'HEAD'],
+      allowedHeaders: [
+        'Content-Type',
+        'Authorization',
+        'Upload-Length',
+        'Upload-Offset',
+        'Tus-Resumable',
+        'Upload-Metadata',
+      ],
+      exposedHeaders: [
+        'Upload-Offset',
+        'Location',
+        'Upload-Length',
+        'Tus-Version',
+        'Tus-Resumable',
+        'Tus-Max-Size',
+        'Tus-Extension',
+        'Upload-Metadata',
+      ],
     })
   );
 
@@ -78,11 +104,20 @@ const createApp = (): Application => {
   app.set('trust proxy', 1);
 
   // Swagger UI
-  app.use('/api-docs', swaggerUi.serve as unknown as express.RequestHandler[], swaggerUi.setup(swaggerSpec) as unknown as express.RequestHandler);
+  app.use(
+    '/api-docs',
+    swaggerUi.serve as unknown as express.RequestHandler[],
+    swaggerUi.setup(swaggerSpec) as unknown as express.RequestHandler
+  );
 
   // API routes
   app.use(passport.initialize() as unknown as express.RequestHandler);
   app.use(config.api.prefix, routes);
+
+  // Call the callback to register additional routes before error handlers (e.g., TUS)
+  if (beforeErrorHandlers) {
+    beforeErrorHandlers(app);
+  }
 
   // 404 handler
   app.use(notFoundHandler);

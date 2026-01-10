@@ -7,12 +7,17 @@ import mongoose from 'mongoose';
 import { connectDB } from './config/database';
 import { redisService } from './services/redis.service';
 import { socketService } from './services/socket.service';
+import { tusService } from './services/tus.service';
 
 process.on('uncaughtException', handleUncaughtException);
 
 process.on('unhandledRejection', handleUnhandledRejection);
 
-const app = createApp();
+// Initialize app with TUS service registered before error handlers
+const app = createApp((expressApp) => {
+  tusService.initialize(expressApp);
+});
+
 const server = http.createServer(app);
 
 /**

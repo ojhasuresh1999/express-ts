@@ -1,0 +1,1145 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Media Upload Test - Cloudinary</title>
+    <script src="https://cdn.jsdelivr.net/npm/tus-js-client@latest/dist/tus.min.js"></script>
+    <style>
+      :root {
+        --primary: #6366f1;
+        --primary-dark: #4f46e5;
+        --success: #10b981;
+        --danger: #ef4444;
+        --warning: #f59e0b;
+        --bg: #0f172a;
+        --bg-card: #1e293b;
+        --bg-hover: #334155;
+        --text: #f1f5f9;
+        --text-muted: #94a3b8;
+        --border: #334155;
+      }
+
+      * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+      }
+
+      body {
+        font-family:
+          'Inter',
+          -apple-system,
+          BlinkMacSystemFont,
+          sans-serif;
+        background: var(--bg);
+        color: var(--text);
+        min-height: 100vh;
+        padding: 2rem;
+      }
+
+      .container {
+        max-width: 1200px;
+        margin: 0 auto;
+      }
+
+      header {
+        text-align: center;
+        margin-bottom: 3rem;
+      }
+
+      header h1 {
+        font-size: 2.5rem;
+        background: linear-gradient(135deg, var(--primary), #a855f7);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        margin-bottom: 0.5rem;
+      }
+
+      header p {
+        color: var(--text-muted);
+        font-size: 1.1rem;
+      }
+
+      .tabs {
+        display: flex;
+        gap: 0.5rem;
+        margin-bottom: 2rem;
+        background: var(--bg-card);
+        padding: 0.5rem;
+        border-radius: 12px;
+      }
+
+      .tab {
+        flex: 1;
+        padding: 1rem;
+        border: none;
+        background: transparent;
+        color: var(--text-muted);
+        font-size: 1rem;
+        cursor: pointer;
+        border-radius: 8px;
+        transition: all 0.3s ease;
+      }
+
+      .tab.active {
+        background: var(--primary);
+        color: white;
+      }
+
+      .tab:hover:not(.active) {
+        background: var(--bg-hover);
+      }
+
+      .tab-content {
+        display: none;
+      }
+
+      .tab-content.active {
+        display: block;
+      }
+
+      .upload-section {
+        background: var(--bg-card);
+        border-radius: 16px;
+        padding: 2rem;
+        margin-bottom: 2rem;
+      }
+
+      .upload-section h2 {
+        font-size: 1.5rem;
+        margin-bottom: 1rem;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+      }
+
+      .dropzone {
+        border: 2px dashed var(--border);
+        border-radius: 12px;
+        padding: 3rem;
+        text-align: center;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        margin-bottom: 1.5rem;
+      }
+
+      .dropzone:hover,
+      .dropzone.dragover {
+        border-color: var(--primary);
+        background: rgba(99, 102, 241, 0.1);
+      }
+
+      .dropzone-icon {
+        font-size: 3rem;
+        margin-bottom: 1rem;
+      }
+
+      .dropzone p {
+        color: var(--text-muted);
+        margin-bottom: 0.5rem;
+      }
+
+      .dropzone-hint {
+        font-size: 0.875rem;
+        color: var(--text-muted);
+      }
+
+      .options-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+        gap: 1rem;
+        margin-bottom: 1.5rem;
+      }
+
+      .option-group {
+        display: flex;
+        flex-direction: column;
+        gap: 0.5rem;
+      }
+
+      .option-group label {
+        font-size: 0.875rem;
+        color: var(--text-muted);
+      }
+
+      .option-group input,
+      .option-group select {
+        padding: 0.75rem 1rem;
+        border: 1px solid var(--border);
+        border-radius: 8px;
+        background: var(--bg);
+        color: var(--text);
+        font-size: 1rem;
+      }
+
+      .option-group input:focus,
+      .option-group select:focus {
+        outline: none;
+        border-color: var(--primary);
+      }
+
+      .checkbox-group {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+      }
+
+      .checkbox-group input[type='checkbox'] {
+        width: 1.25rem;
+        height: 1.25rem;
+        accent-color: var(--primary);
+      }
+
+      .btn {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        gap: 0.5rem;
+        padding: 1rem 2rem;
+        border: none;
+        border-radius: 8px;
+        font-size: 1rem;
+        font-weight: 600;
+        cursor: pointer;
+        transition: all 0.3s ease;
+      }
+
+      .btn-primary {
+        background: var(--primary);
+        color: white;
+      }
+
+      .btn-primary:hover {
+        background: var(--primary-dark);
+      }
+
+      .btn-danger {
+        background: var(--danger);
+        color: white;
+      }
+
+      .btn-warning {
+        background: var(--warning);
+        color: white;
+      }
+
+      .btn-success {
+        background: var(--success);
+        color: white;
+      }
+
+      .btn:disabled {
+        opacity: 0.5;
+        cursor: not-allowed;
+      }
+
+      .progress-container {
+        display: none;
+        margin-top: 1.5rem;
+      }
+
+      .progress-container.visible {
+        display: block;
+      }
+
+      .progress-header {
+        display: flex;
+        justify-content: space-between;
+        margin-bottom: 0.5rem;
+      }
+
+      .progress-bar {
+        height: 12px;
+        background: var(--bg);
+        border-radius: 6px;
+        overflow: hidden;
+      }
+
+      .progress-fill {
+        height: 100%;
+        background: linear-gradient(90deg, var(--primary), #a855f7);
+        border-radius: 6px;
+        transition: width 0.3s ease;
+        width: 0%;
+      }
+
+      .progress-actions {
+        display: flex;
+        gap: 0.5rem;
+        margin-top: 1rem;
+      }
+
+      .file-info {
+        display: none;
+        background: var(--bg);
+        border-radius: 8px;
+        padding: 1rem;
+        margin-top: 1rem;
+      }
+
+      .file-info.visible {
+        display: flex;
+        align-items: center;
+        gap: 1rem;
+      }
+
+      .file-preview {
+        width: 80px;
+        height: 80px;
+        border-radius: 8px;
+        object-fit: cover;
+        background: var(--bg-hover);
+      }
+
+      .file-details {
+        flex: 1;
+      }
+
+      .file-name {
+        font-weight: 600;
+        margin-bottom: 0.25rem;
+      }
+
+      .file-size {
+        color: var(--text-muted);
+        font-size: 0.875rem;
+      }
+
+      .results-section {
+        background: var(--bg-card);
+        border-radius: 16px;
+        padding: 2rem;
+      }
+
+      .results-section h2 {
+        margin-bottom: 1.5rem;
+      }
+
+      .result-card {
+        background: var(--bg);
+        border-radius: 12px;
+        padding: 1rem;
+        margin-bottom: 1rem;
+        display: flex;
+        gap: 1rem;
+      }
+
+      .result-thumbnail {
+        width: 100px;
+        height: 100px;
+        border-radius: 8px;
+        object-fit: cover;
+        background: var(--bg-hover);
+      }
+
+      .result-info {
+        flex: 1;
+      }
+
+      .result-info h4 {
+        margin-bottom: 0.5rem;
+      }
+
+      .result-meta {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+        gap: 0.5rem;
+        font-size: 0.875rem;
+        color: var(--text-muted);
+      }
+
+      .result-meta span {
+        display: flex;
+        align-items: center;
+        gap: 0.25rem;
+      }
+
+      .result-actions {
+        display: flex;
+        flex-direction: column;
+        gap: 0.5rem;
+      }
+
+      .result-actions .btn {
+        padding: 0.5rem 1rem;
+        font-size: 0.875rem;
+      }
+
+      .compression-stats {
+        display: none;
+        background: rgba(16, 185, 129, 0.1);
+        border: 1px solid var(--success);
+        border-radius: 8px;
+        padding: 1rem;
+        margin-top: 1rem;
+      }
+
+      .compression-stats.visible {
+        display: block;
+      }
+
+      .compression-stats h4 {
+        color: var(--success);
+        margin-bottom: 0.5rem;
+      }
+
+      .stats-grid {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 1rem;
+        text-align: center;
+      }
+
+      .stat-item {
+        padding: 0.5rem;
+      }
+
+      .stat-value {
+        font-size: 1.5rem;
+        font-weight: 700;
+        color: var(--success);
+      }
+
+      .stat-label {
+        font-size: 0.75rem;
+        color: var(--text-muted);
+      }
+
+      .status-message {
+        padding: 1rem;
+        border-radius: 8px;
+        margin-top: 1rem;
+        display: none;
+      }
+
+      .status-message.visible {
+        display: block;
+      }
+
+      .status-message.success {
+        background: rgba(16, 185, 129, 0.1);
+        border: 1px solid var(--success);
+        color: var(--success);
+      }
+
+      .status-message.error {
+        background: rgba(239, 68, 68, 0.1);
+        border: 1px solid var(--danger);
+        color: var(--danger);
+      }
+
+      .empty-state {
+        text-align: center;
+        padding: 3rem;
+        color: var(--text-muted);
+      }
+
+      .empty-state-icon {
+        font-size: 3rem;
+        margin-bottom: 1rem;
+      }
+
+      @keyframes pulse {
+        0%,
+        100% {
+          opacity: 1;
+        }
+        50% {
+          opacity: 0.5;
+        }
+      }
+
+      .uploading .dropzone-icon {
+        animation: pulse 2s infinite;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="container">
+      <header>
+        <h1>☁️ Media Upload Test</h1>
+        <p>Production-level Cloudinary uploads with compression and resumable features</p>
+      </header>
+
+      <div class="tabs">
+        <button class="tab active" data-tab="image">📷 Image Upload</button>
+        <button class="tab" data-tab="video">🎬 Video Upload</button>
+        <button class="tab" data-tab="resumable">⏸️ Resumable Upload</button>
+      </div>
+
+      <!-- Image Upload Tab -->
+      <div id="image-tab" class="tab-content active">
+        <section class="upload-section">
+          <h2>📷 Image Upload with Compression</h2>
+
+          <div class="dropzone" id="image-dropzone">
+            <div class="dropzone-icon">📁</div>
+            <p>Drag & drop an image here or click to browse</p>
+            <span class="dropzone-hint">Supports: JPEG, PNG, GIF, WebP, AVIF (Max 10MB)</span>
+            <input type="file" id="image-input" accept="image/*" hidden />
+          </div>
+
+          <div class="file-info" id="image-file-info">
+            <img class="file-preview" id="image-preview" alt="Preview" />
+            <div class="file-details">
+              <div class="file-name" id="image-file-name">filename.jpg</div>
+              <div class="file-size" id="image-file-size">2.5 MB</div>
+            </div>
+            <button class="btn btn-danger" id="clear-image-btn">✕</button>
+          </div>
+
+          <div class="options-grid">
+            <div class="option-group">
+              <label>Folder</label>
+              <input type="text" id="image-folder" placeholder="images" value="images" />
+            </div>
+            <div class="option-group">
+              <label>Quality (1-100)</label>
+              <input type="number" id="image-quality" min="1" max="100" value="80" />
+            </div>
+            <div class="option-group">
+              <label>Max Width</label>
+              <input type="number" id="image-max-width" placeholder="Optional" />
+            </div>
+            <div class="option-group">
+              <label>Max Height</label>
+              <input type="number" id="image-max-height" placeholder="Optional" />
+            </div>
+            <div class="option-group">
+              <label>Output Format</label>
+              <select id="image-format">
+                <option value="jpeg">JPEG</option>
+                <option value="png">PNG</option>
+                <option value="webp">WebP</option>
+                <option value="avif">AVIF</option>
+              </select>
+            </div>
+            <div class="option-group">
+              <div class="checkbox-group" style="margin-top: 1.5rem">
+                <input type="checkbox" id="image-compress" checked />
+                <label for="image-compress">Enable Compression</label>
+              </div>
+            </div>
+          </div>
+
+          <button class="btn btn-primary" id="image-upload-btn" disabled>⬆️ Upload Image</button>
+
+          <div class="progress-container" id="image-progress">
+            <div class="progress-header">
+              <span>Uploading...</span>
+              <span id="image-progress-text">0%</span>
+            </div>
+            <div class="progress-bar">
+              <div class="progress-fill" id="image-progress-fill"></div>
+            </div>
+          </div>
+
+          <div class="compression-stats" id="compression-stats">
+            <h4>📊 Compression Results</h4>
+            <div class="stats-grid">
+              <div class="stat-item">
+                <div class="stat-value" id="stat-original">0 KB</div>
+                <div class="stat-label">Original Size</div>
+              </div>
+              <div class="stat-item">
+                <div class="stat-value" id="stat-compressed">0 KB</div>
+                <div class="stat-label">Compressed Size</div>
+              </div>
+              <div class="stat-item">
+                <div class="stat-value" id="stat-ratio">0%</div>
+                <div class="stat-label">Saved</div>
+              </div>
+            </div>
+          </div>
+
+          <div class="status-message" id="image-status"></div>
+        </section>
+      </div>
+
+      <!-- Video Upload Tab -->
+      <div id="video-tab" class="tab-content">
+        <section class="upload-section">
+          <h2>🎬 Video Upload</h2>
+
+          <div class="dropzone" id="video-dropzone">
+            <div class="dropzone-icon">🎥</div>
+            <p>Drag & drop a video here or click to browse</p>
+            <span class="dropzone-hint">Supports: MP4, WebM, MOV, AVI (Max 500MB)</span>
+            <input type="file" id="video-input" accept="video/*" hidden />
+          </div>
+
+          <div class="file-info" id="video-file-info">
+            <video class="file-preview" id="video-preview"></video>
+            <div class="file-details">
+              <div class="file-name" id="video-file-name">video.mp4</div>
+              <div class="file-size" id="video-file-size">50 MB</div>
+            </div>
+            <button class="btn btn-danger" id="clear-video-btn">✕</button>
+          </div>
+
+          <div class="options-grid">
+            <div class="option-group">
+              <label>Folder</label>
+              <input type="text" id="video-folder" placeholder="videos" value="videos" />
+            </div>
+          </div>
+
+          <button class="btn btn-primary" id="video-upload-btn" disabled>⬆️ Upload Video</button>
+
+          <div class="progress-container" id="video-progress">
+            <div class="progress-header">
+              <span>Uploading...</span>
+              <span id="video-progress-text">0%</span>
+            </div>
+            <div class="progress-bar">
+              <div class="progress-fill" id="video-progress-fill"></div>
+            </div>
+          </div>
+
+          <div class="status-message" id="video-status"></div>
+        </section>
+      </div>
+
+      <!-- Resumable Upload Tab -->
+      <div id="resumable-tab" class="tab-content">
+        <section class="upload-section">
+          <h2>⏸️ Resumable Upload (TUS Protocol)</h2>
+          <p style="color: var(--text-muted); margin-bottom: 1.5rem">
+            Upload large files with pause/resume capability. If the connection is interrupted, the
+            upload will resume from where it left off.
+          </p>
+
+          <div class="dropzone" id="resumable-dropzone">
+            <div class="dropzone-icon">📦</div>
+            <p>Drag & drop any file here or click to browse</p>
+            <span class="dropzone-hint">Supports all file types (Max 100MB)</span>
+            <input type="file" id="resumable-input" hidden />
+          </div>
+
+          <div class="file-info" id="resumable-file-info">
+            <div
+              class="file-preview"
+              style="display: flex; align-items: center; justify-content: center; font-size: 2rem"
+            >
+              📄
+            </div>
+            <div class="file-details">
+              <div class="file-name" id="resumable-file-name">document.pdf</div>
+              <div class="file-size" id="resumable-file-size">25 MB</div>
+            </div>
+            <button class="btn btn-danger" id="clear-resumable-btn">✕</button>
+          </div>
+
+          <button class="btn btn-primary" id="resumable-upload-btn" disabled>
+            ⬆️ Start Upload
+          </button>
+
+          <div class="progress-container" id="resumable-progress">
+            <div class="progress-header">
+              <span id="resumable-status-text">Uploading...</span>
+              <span id="resumable-progress-text">0%</span>
+            </div>
+            <div class="progress-bar">
+              <div class="progress-fill" id="resumable-progress-fill"></div>
+            </div>
+            <div class="progress-actions">
+              <button class="btn btn-warning" id="pause-btn">⏸️ Pause</button>
+              <button class="btn btn-success" id="resume-btn" disabled>▶️ Resume</button>
+              <button class="btn btn-danger" id="abort-btn">✕ Cancel</button>
+            </div>
+          </div>
+
+          <div class="status-message" id="resumable-status"></div>
+        </section>
+      </div>
+
+      <!-- Upload Results -->
+      <section class="results-section">
+        <h2>📋 Upload History</h2>
+        <div id="results-container">
+          <div class="empty-state">
+            <div class="empty-state-icon">📭</div>
+            <p>No uploads yet. Upload a file to see results here.</p>
+          </div>
+        </div>
+      </section>
+    </div>
+
+    <script>
+      // API base URL
+      const API_BASE = '/api/upload';
+
+      // State
+      let selectedImageFile = null;
+      let selectedVideoFile = null;
+      let selectedResumableFile = null;
+      let tusUpload = null;
+
+      // Tab switching
+      document.querySelectorAll('.tab').forEach((tab) => {
+        tab.addEventListener('click', () => {
+          document.querySelectorAll('.tab').forEach((t) => t.classList.remove('active'));
+          document.querySelectorAll('.tab-content').forEach((c) => c.classList.remove('active'));
+          tab.classList.add('active');
+          document.getElementById(`${tab.dataset.tab}-tab`).classList.add('active');
+        });
+      });
+
+      // Dropzone handlers
+      function setupDropzone(dropzoneId, inputId, onFileSelect) {
+        const dropzone = document.getElementById(dropzoneId);
+        const input = document.getElementById(inputId);
+
+        dropzone.addEventListener('click', () => input.click());
+
+        dropzone.addEventListener('dragover', (e) => {
+          e.preventDefault();
+          dropzone.classList.add('dragover');
+        });
+
+        dropzone.addEventListener('dragleave', () => {
+          dropzone.classList.remove('dragover');
+        });
+
+        dropzone.addEventListener('drop', (e) => {
+          e.preventDefault();
+          dropzone.classList.remove('dragover');
+          const files = e.dataTransfer.files;
+          if (files.length > 0) {
+            onFileSelect(files[0]);
+          }
+        });
+
+        input.addEventListener('change', () => {
+          if (input.files.length > 0) {
+            onFileSelect(input.files[0]);
+          }
+        });
+      }
+
+      // Format file size
+      function formatFileSize(bytes) {
+        if (bytes === 0) return '0 Bytes';
+        const k = 1024;
+        const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+        const i = Math.floor(Math.log(bytes) / Math.log(k));
+        return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+      }
+
+      // Image file selection
+      function onImageFileSelect(file) {
+        if (!file.type.startsWith('image/')) {
+          showStatus('image-status', 'Please select an image file', 'error');
+          return;
+        }
+
+        selectedImageFile = file;
+        document.getElementById('image-file-info').classList.add('visible');
+        document.getElementById('image-file-name').textContent = file.name;
+        document.getElementById('image-file-size').textContent = formatFileSize(file.size);
+        document.getElementById('image-upload-btn').disabled = false;
+
+        const reader = new FileReader();
+        reader.onload = (e) => {
+          document.getElementById('image-preview').src = e.target.result;
+        };
+        reader.readAsDataURL(file);
+      }
+
+      function clearImageFile() {
+        selectedImageFile = null;
+        document.getElementById('image-file-info').classList.remove('visible');
+        document.getElementById('image-upload-btn').disabled = true;
+        document.getElementById('image-input').value = '';
+      }
+
+      // Video file selection
+      function onVideoFileSelect(file) {
+        if (!file.type.startsWith('video/')) {
+          showStatus('video-status', 'Please select a video file', 'error');
+          return;
+        }
+
+        selectedVideoFile = file;
+        document.getElementById('video-file-info').classList.add('visible');
+        document.getElementById('video-file-name').textContent = file.name;
+        document.getElementById('video-file-size').textContent = formatFileSize(file.size);
+        document.getElementById('video-upload-btn').disabled = false;
+
+        const reader = new FileReader();
+        reader.onload = (e) => {
+          document.getElementById('video-preview').src = e.target.result;
+        };
+        reader.readAsDataURL(file);
+      }
+
+      function clearVideoFile() {
+        selectedVideoFile = null;
+        document.getElementById('video-file-info').classList.remove('visible');
+        document.getElementById('video-upload-btn').disabled = true;
+        document.getElementById('video-input').value = '';
+      }
+
+      // Resumable file selection
+      function onResumableFileSelect(file) {
+        selectedResumableFile = file;
+        document.getElementById('resumable-file-info').classList.add('visible');
+        document.getElementById('resumable-file-name').textContent = file.name;
+        document.getElementById('resumable-file-size').textContent = formatFileSize(file.size);
+        document.getElementById('resumable-upload-btn').disabled = false;
+      }
+
+      function clearResumableFile() {
+        selectedResumableFile = null;
+        document.getElementById('resumable-file-info').classList.remove('visible');
+        document.getElementById('resumable-upload-btn').disabled = true;
+        document.getElementById('resumable-input').value = '';
+      }
+
+      // Show status message
+      function showStatus(elementId, message, type) {
+        const el = document.getElementById(elementId);
+        el.textContent = message;
+        el.className = `status-message visible ${type}`;
+      }
+
+      // Upload image
+      async function uploadImage() {
+        if (!selectedImageFile) return;
+
+        const formData = new FormData();
+        formData.append('image', selectedImageFile);
+        formData.append('folder', document.getElementById('image-folder').value);
+        formData.append('quality', document.getElementById('image-quality').value);
+        formData.append('format', document.getElementById('image-format').value);
+        formData.append('compress', document.getElementById('image-compress').checked);
+
+        const maxWidth = document.getElementById('image-max-width').value;
+        const maxHeight = document.getElementById('image-max-height').value;
+        if (maxWidth) formData.append('maxWidth', maxWidth);
+        if (maxHeight) formData.append('maxHeight', maxHeight);
+
+        const progressContainer = document.getElementById('image-progress');
+        const progressFill = document.getElementById('image-progress-fill');
+        const progressText = document.getElementById('image-progress-text');
+
+        progressContainer.classList.add('visible');
+        document.getElementById('image-upload-btn').disabled = true;
+
+        try {
+          const xhr = new XMLHttpRequest();
+
+          xhr.upload.addEventListener('progress', (e) => {
+            if (e.lengthComputable) {
+              const percent = Math.round((e.loaded / e.total) * 100);
+              progressFill.style.width = `${percent}%`;
+              progressText.textContent = `${percent}%`;
+            }
+          });
+
+          xhr.onload = function () {
+            if (xhr.status === 200) {
+              const result = JSON.parse(xhr.responseText);
+              showStatus('image-status', '✅ Image uploaded successfully!', 'success');
+
+              // Show compression stats if available
+              if (result.data.compression) {
+                const stats = document.getElementById('compression-stats');
+                stats.classList.add('visible');
+                document.getElementById('stat-original').textContent = formatFileSize(
+                  result.data.compression.originalSize
+                );
+                document.getElementById('stat-compressed').textContent = formatFileSize(
+                  result.data.compression.compressedSize
+                );
+                document.getElementById('stat-ratio').textContent =
+                  result.data.compression.compressionRatio;
+              }
+
+              addResultCard(result.data);
+              clearImageFile();
+            } else {
+              const error = JSON.parse(xhr.responseText);
+              showStatus('image-status', `❌ Upload failed: ${error.message}`, 'error');
+            }
+            progressContainer.classList.remove('visible');
+            document.getElementById('image-upload-btn').disabled = false;
+          };
+
+          xhr.onerror = function () {
+            showStatus('image-status', '❌ Network error occurred', 'error');
+            progressContainer.classList.remove('visible');
+            document.getElementById('image-upload-btn').disabled = false;
+          };
+
+          xhr.open('POST', `${API_BASE}/image`);
+          xhr.send(formData);
+        } catch (error) {
+          showStatus('image-status', `❌ Error: ${error.message}`, 'error');
+          progressContainer.classList.remove('visible');
+          document.getElementById('image-upload-btn').disabled = false;
+        }
+      }
+
+      document.getElementById('image-upload-btn').addEventListener('click', uploadImage);
+      // Upload video
+
+      async function uploadVideo() {
+        if (!selectedVideoFile) return;
+
+        const formData = new FormData();
+        formData.append('video', selectedVideoFile);
+        formData.append('folder', document.getElementById('video-folder').value);
+
+        const progressContainer = document.getElementById('video-progress');
+        const progressFill = document.getElementById('video-progress-fill');
+        const progressText = document.getElementById('video-progress-text');
+
+        progressContainer.classList.add('visible');
+        document.getElementById('video-upload-btn').disabled = true;
+
+        try {
+          const xhr = new XMLHttpRequest();
+
+          xhr.upload.addEventListener('progress', (e) => {
+            if (e.lengthComputable) {
+              const percent = Math.round((e.loaded / e.total) * 100);
+              progressFill.style.width = `${percent}%`;
+              progressText.textContent = `${percent}%`;
+            }
+          });
+
+          xhr.onload = function () {
+            if (xhr.status === 200) {
+              const result = JSON.parse(xhr.responseText);
+              showStatus('video-status', '✅ Video uploaded successfully!', 'success');
+              addResultCard(result.data);
+              clearVideoFile();
+            } else {
+              const error = JSON.parse(xhr.responseText);
+              showStatus('video-status', `❌ Upload failed: ${error.message}`, 'error');
+            }
+            progressContainer.classList.remove('visible');
+            document.getElementById('video-upload-btn').disabled = false;
+          };
+
+          xhr.onerror = function () {
+            showStatus('video-status', '❌ Network error occurred', 'error');
+            progressContainer.classList.remove('visible');
+            document.getElementById('video-upload-btn').disabled = false;
+          };
+
+          xhr.open('POST', `${API_BASE}/video`);
+          xhr.send(formData);
+        } catch (error) {
+          showStatus('video-status', `❌ Error: ${error.message}`, 'error');
+          progressContainer.classList.remove('visible');
+          document.getElementById('video-upload-btn').disabled = false;
+        }
+      }
+
+      // Resumable upload with TUS
+      function startResumableUpload() {
+        if (!selectedResumableFile) return;
+
+        const progressContainer = document.getElementById('resumable-progress');
+        const progressFill = document.getElementById('resumable-progress-fill');
+        const progressText = document.getElementById('resumable-progress-text');
+        const statusText = document.getElementById('resumable-status-text');
+
+        progressContainer.classList.add('visible');
+        document.getElementById('resumable-upload-btn').disabled = true;
+        document.getElementById('pause-btn').disabled = false;
+        document.getElementById('resume-btn').disabled = true;
+
+        tusUpload = new tus.Upload(selectedResumableFile, {
+          endpoint: `${API_BASE}/resumable`,
+          retryDelays: [0, 1000, 3000, 5000],
+          chunkSize: 5 * 1024 * 1024, // 5MB chunks
+          metadata: {
+            filename: selectedResumableFile.name,
+            filetype: selectedResumableFile.type,
+          },
+          onError: function (error) {
+            showStatus('resumable-status', `❌ Upload failed: ${error.message}`, 'error');
+            resetResumableUI();
+          },
+          onProgress: function (bytesUploaded, bytesTotal) {
+            const percent = Math.round((bytesUploaded / bytesTotal) * 100);
+            progressFill.style.width = `${percent}%`;
+            progressText.textContent = `${percent}%`;
+            statusText.textContent = `Uploading... ${formatFileSize(bytesUploaded)} / ${formatFileSize(bytesTotal)}`;
+          },
+          onSuccess: function () {
+            showStatus('resumable-status', '✅ Upload completed successfully!', 'success');
+            clearResumableFile();
+            resetResumableUI();
+
+            // Poll for the result
+            const uploadId = tusUpload.url.split('/').pop();
+            pollUploadResult(uploadId);
+          },
+        });
+
+        // Check for previous uploads to resume
+        tusUpload.findPreviousUploads().then(function (previousUploads) {
+          if (previousUploads.length > 0) {
+            tusUpload.resumeFromPreviousUpload(previousUploads[0]);
+            statusText.textContent = 'Resuming previous upload...';
+          }
+          tusUpload.start();
+        });
+      }
+
+      function pauseUpload() {
+        if (tusUpload) {
+          tusUpload.abort();
+          document.getElementById('pause-btn').disabled = true;
+          document.getElementById('resume-btn').disabled = false;
+          document.getElementById('resumable-status-text').textContent = 'Paused';
+          showStatus('resumable-status', '⏸️ Upload paused', 'success');
+        }
+      }
+
+      function resumeUpload() {
+        if (tusUpload) {
+          tusUpload.start();
+          document.getElementById('pause-btn').disabled = false;
+          document.getElementById('resume-btn').disabled = true;
+          document.getElementById('resumable-status-text').textContent = 'Resuming...';
+        }
+      }
+
+      function abortUpload() {
+        if (tusUpload) {
+          tusUpload.abort(true);
+          tusUpload = null;
+          showStatus('resumable-status', '❌ Upload cancelled', 'error');
+          resetResumableUI();
+        }
+      }
+
+      function resetResumableUI() {
+        document.getElementById('resumable-progress').classList.remove('visible');
+        document.getElementById('resumable-upload-btn').disabled = selectedResumableFile === null;
+        document.getElementById('pause-btn').disabled = true;
+        document.getElementById('resume-btn').disabled = true;
+      }
+
+      async function pollUploadResult(uploadId) {
+        try {
+          const response = await fetch(`${API_BASE}/resumable/status/${uploadId}`);
+          const result = await response.json();
+
+          if (result.data.status === 'completed' && result.data.result) {
+            addResultCard(result.data.result);
+          } else if (result.data.status === 'pending') {
+            // Poll again after 2 seconds
+            setTimeout(() => pollUploadResult(uploadId), 2000);
+          }
+        } catch (error) {
+          console.error('Failed to poll upload result:', error);
+        }
+      }
+
+      // Add result card
+      function addResultCard(data) {
+        const container = document.getElementById('results-container');
+
+        // Remove empty state if present
+        const emptyState = container.querySelector('.empty-state');
+        if (emptyState) emptyState.remove();
+
+        const isImage = data.resourceType === 'image';
+        const isVideo = data.resourceType === 'video';
+
+        const card = document.createElement('div');
+        card.className = 'result-card';
+        card.innerHTML = `
+        ${
+          isImage
+            ? `<img class="result-thumbnail" src="${data.secureUrl}" alt="Thumbnail">`
+            : isVideo
+              ? `<video class="result-thumbnail" src="${data.secureUrl}"></video>`
+              : `<div class="result-thumbnail" style="display: flex; align-items: center; justify-content: center; font-size: 2rem;">📄</div>`
+        }
+        <div class="result-info">
+          <h4>${data.originalFilename || data.publicId}</h4>
+          <div class="result-meta">
+            <span>📦 ${formatFileSize(data.bytes)}</span>
+            <span>📐 ${data.width}x${data.height || '-'}</span>
+            <span>🏷️ ${data.format}</span>
+            <span>🔗 ${data.publicId}</span>
+          </div>
+        </div>
+        <div class="result-actions">
+          <a class="btn btn-primary" href="${data.secureUrl}" target="_blank" rel="noopener">
+            View
+          </a>
+          <button class="btn btn-danger delete-btn">
+            Delete
+          </button>
+        </div>
+      `;
+
+        const deleteBtn = card.querySelector('.delete-btn');
+        deleteBtn.addEventListener('click', () => {
+          deleteMedia(data.publicId, data.resourceType, card);
+        });
+
+        container.insertBefore(card, container.firstChild);
+      }
+
+      // Delete media
+      async function deleteMedia(publicId, resourceType, cardElement) {
+        if (!confirm('Are you sure you want to delete this file?')) return;
+
+        try {
+          const response = await fetch(
+            `${API_BASE}/${encodeURIComponent(publicId)}?resourceType=${resourceType}`,
+            {
+              method: 'DELETE',
+            }
+          );
+
+          if (response.ok) {
+            cardElement.remove();
+
+            // Show empty state if no more results
+            const container = document.getElementById('results-container');
+            if (!container.querySelector('.result-card')) {
+              container.innerHTML = `
+              <div class="empty-state">
+                <div class="empty-state-icon">📭</div>
+                <p>No uploads yet. Upload a file to see results here.</p>
+              </div>
+            `;
+            }
+          } else {
+            alert('Failed to delete file');
+          }
+        } catch (error) {
+          alert(`Error: ${error.message}`);
+        }
+      }
+
+      // Initialize dropzones
+      setupDropzone('image-dropzone', 'image-input', onImageFileSelect);
+      setupDropzone('video-dropzone', 'video-input', onVideoFileSelect);
+      setupDropzone('resumable-dropzone', 'resumable-input', onResumableFileSelect);
+
+      // Event Listeners
+      document.getElementById('clear-image-btn')?.addEventListener('click', clearImageFile);
+      document.getElementById('video-upload-btn')?.addEventListener('click', uploadVideo);
+      document.getElementById('clear-video-btn')?.addEventListener('click', clearVideoFile);
+      document.getElementById('clear-resumable-btn')?.addEventListener('click', clearResumableFile);
+      document
+        .getElementById('resumable-upload-btn')
+        ?.addEventListener('click', startResumableUpload);
+      document.getElementById('pause-btn')?.addEventListener('click', pauseUpload);
+      document.getElementById('resume-btn')?.addEventListener('click', resumeUpload);
+      document.getElementById('abort-btn')?.addEventListener('click', abortUpload);
+    </script>
+  </body>
+</html>

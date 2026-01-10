@@ -43,6 +43,21 @@ interface Config {
     path: string;
     corsOrigin: string;
   };
+  cloudinary: {
+    cloudName: string;
+    apiKey: string;
+    apiSecret: string;
+  };
+  upload: {
+    maxImageSizeMB: number;
+    maxVideoSizeMB: number;
+    maxFileSizeMB: number;
+    compressionQuality: number;
+    allowedImageTypes: string[];
+    allowedVideoTypes: string[];
+    allowedDocumentTypes: string[];
+    tusChunkSizeMB: number;
+  };
 }
 
 const config: Config = {
@@ -86,6 +101,25 @@ const config: Config = {
   socket: {
     path: process.env.SOCKET_PATH || '/socket.io',
     corsOrigin: process.env.SOCKET_CORS_ORIGIN || '*',
+  },
+  cloudinary: {
+    cloudName: process.env.CLOUDINARY_CLOUD_NAME || '',
+    apiKey: process.env.CLOUDINARY_API_KEY || '',
+    apiSecret: process.env.CLOUDINARY_API_SECRET || '',
+  },
+  upload: {
+    maxImageSizeMB: parseInt(process.env.MAX_IMAGE_SIZE_MB || '10', 10),
+    maxVideoSizeMB: parseInt(process.env.MAX_VIDEO_SIZE_MB || '500', 10),
+    maxFileSizeMB: parseInt(process.env.MAX_FILE_SIZE_MB || '100', 10),
+    compressionQuality: parseInt(process.env.COMPRESSION_QUALITY || '80', 10),
+    allowedImageTypes: ['image/jpeg', 'image/png', 'image/gif', 'image/webp', 'image/avif'],
+    allowedVideoTypes: ['video/mp4', 'video/webm', 'video/quicktime', 'video/avi'],
+    allowedDocumentTypes: [
+      'application/pdf',
+      'application/msword',
+      'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+    ],
+    tusChunkSizeMB: parseInt(process.env.TUS_CHUNK_SIZE_MB || '5', 10),
   },
 };
 
