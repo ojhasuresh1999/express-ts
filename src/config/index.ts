@@ -58,6 +58,20 @@ interface Config {
     allowedDocumentTypes: string[];
     tusChunkSizeMB: number;
   };
+  queue: {
+    concurrency: number;
+    boardPath: string;
+    boardAuth: {
+      username: string;
+      password: string;
+    };
+  };
+  otp: {
+    length: number;
+    ttlSeconds: number;
+    maxAttempts: number;
+    cooldownSeconds: number;
+  };
 }
 
 const config: Config = {
@@ -120,6 +134,20 @@ const config: Config = {
       'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
     ],
     tusChunkSizeMB: parseInt(process.env.TUS_CHUNK_SIZE_MB || '5', 10),
+  },
+  queue: {
+    concurrency: parseInt(process.env.QUEUE_CONCURRENCY || '5', 10),
+    boardPath: process.env.QUEUE_BOARD_PATH || '/admin/queues',
+    boardAuth: {
+      username: process.env.QUEUE_BOARD_USERNAME || '',
+      password: process.env.QUEUE_BOARD_PASSWORD || '',
+    },
+  },
+  otp: {
+    length: parseInt(process.env.OTP_LENGTH || '4', 10),
+    ttlSeconds: parseInt(process.env.OTP_TTL_SECONDS || '300', 10),
+    maxAttempts: parseInt(process.env.OTP_MAX_ATTEMPTS || '3', 10),
+    cooldownSeconds: parseInt(process.env.OTP_COOLDOWN_SECONDS || '60', 10),
   },
 };
 

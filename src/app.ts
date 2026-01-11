@@ -11,6 +11,7 @@ import { morganStream } from './utils/logger';
 import { errorHandler, notFoundHandler, defaultRateLimiter } from './middlewares';
 import swaggerUi from 'swagger-ui-express';
 import { swaggerSpec } from './config/swagger';
+import { mountBullBoard } from './queues';
 
 /**
  * Create and configure Express application
@@ -109,6 +110,10 @@ const createApp = (beforeErrorHandlers?: (app: Application) => void): Applicatio
     swaggerUi.serve as unknown as express.RequestHandler[],
     swaggerUi.setup(swaggerSpec) as unknown as express.RequestHandler
   );
+
+  // Bull Board (Queue Dashboard) - mounted before auth middleware
+  // Note: Queues are registered lazily in server.ts
+  mountBullBoard(app);
 
   // API routes
   app.use(passport.initialize() as unknown as express.RequestHandler);

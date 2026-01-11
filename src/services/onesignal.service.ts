@@ -42,7 +42,9 @@ class OneSignalService {
     const { appId, apiKey } = config.onesignal;
 
     if (!appId || !apiKey) {
-      logger.warn('OneSignal not configured. Set ONESIGNAL_APP_ID and ONESIGNAL_API_KEY environment variables.');
+      logger.warn(
+        'OneSignal not configured. Set ONESIGNAL_APP_ID and ONESIGNAL_API_KEY environment variables.'
+      );
       return;
     }
 
@@ -140,6 +142,36 @@ class OneSignalService {
     notification: NotificationPayload
   ): Promise<{ id: string; recipients: number } | null> {
     return this.sendToSegment('Subscribed Users', notification);
+  }
+
+  /**
+   * Send push notification with filters
+   */
+  public async sendWithFilters(
+    filters: Array<{ field: string; key?: string; relation: string; value: string }>,
+    notification: NotificationPayload
+  ): Promise<{ id: string; recipients: number } | null> {
+    if (!this.isAvailable() || !this.client) {
+      logger.warn('OneSignal not configured, skipping push notification');
+      return null;
+    }
+
+    try {
+      const response = await this.client.createNotification({
+        filters,
+        headings: { en: notification.title },
+        contents: { en: notification.body },
+        data: notification.data,
+        url: notification.url,
+        big_picture: notification.imageUrl,
+      });
+
+      logger.debug(`Push notification sent with ${filters.length} filters`);
+      return response as unknown as { id: string; recipients: number };
+    } catch (error) {
+      logger.error('Failed to send push notification with filters:', error);
+      throw error;
+    }
   }
 
   /**

@@ -38,8 +38,9 @@ class RedisService {
           const delay = Math.min(times * 50, 2000);
           return delay;
         },
-        maxRetriesPerRequest: 3,
+        maxRetriesPerRequest: null,
         lazyConnect: true,
+        password: config.redis.password,
       });
 
       await this.client.connect();

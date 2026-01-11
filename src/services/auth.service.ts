@@ -9,6 +9,8 @@ import {
 import { ApiError } from '../utils/ApiError';
 import logger from '../utils/logger';
 import { MESSAGES } from '../constants/messages';
+import otpService from './otp.service';
+import { OtpPurpose } from '../types/otp.types';
 
 /**
  * Authentication result interface
@@ -81,19 +83,22 @@ export const register = async (
     expiresAt: getRefreshTokenExpiration(),
   });
 
-  const accessToken = await generateAccessToken(user._id.toString(), session._id.toString(), user.role);
+  const accessToken = await generateAccessToken(
+    user._id.toString(),
+    session._id.toString(),
+    user.role
+  );
 
   // Update refresh token with session ID
-  const finalRefreshToken = await generateRefreshToken(
-    user._id.toString(),
-    session._id.toString()
-  );
+  const finalRefreshToken = await generateRefreshToken(user._id.toString(), session._id.toString());
 
   // Update session with correct token hash
   session.refreshTokenHash = hashToken(finalRefreshToken);
   await session.save();
 
   logger.info(`User registered: ${user.email}`);
+
+  await otpService.sendOtp(user.email, OtpPurpose.REGISTRATION, user.firstName);
 
   return {
     user: user.toJSON(),
@@ -110,78 +115,74 @@ export const register = async (
 /**
  * Login user
  */
-export const login = async (
-  input: LoginInput,
-  deviceInfo: IDeviceInfo
-): Promise<AuthResult> => {
- 
-    const user = await User.findOne({ email: input.email.toLowerCase() }).select(
-      '+password'
-    );
-  
-    if (!user) {
-      throw ApiError.unauthorized(MESSAGES.AUTH.INVALID_CREDENTIALS);
-    }
-  
-    if (!user.isActive) {
-      throw ApiError.forbidden(MESSAGES.AUTH.ACCOUNT_DEACTIVATED);
-    }
-  
-    const isPasswordValid = await user.comparePassword(input.password);
-    if (!isPasswordValid) {
-      throw ApiError.unauthorized(MESSAGES.AUTH.INVALID_CREDENTIALS);
-    }
+export const login = async (input: LoginInput, deviceInfo: IDeviceInfo): Promise<AuthResult> => {
+  const user = await User.findOne({ email: input.email.toLowerCase() }).select('+password');
 
-    // Check for existing active session for this device
-    let session = await Session.findOne({
+  if (!user) {
+    throw ApiError.unauthorized(MESSAGES.AUTH.INVALID_CREDENTIALS);
+  }
+
+  if (!user.isActive) {
+    throw ApiError.forbidden(MESSAGES.AUTH.ACCOUNT_DEACTIVATED);
+  }
+
+  const isPasswordValid = await user.comparePassword(input.password);
+  if (!isPasswordValid) {
+    throw ApiError.unauthorized(MESSAGES.AUTH.INVALID_CREDENTIALS);
+  }
+
+  // Check for existing active session for this device
+  let session = await Session.findOne({
+    userId: user._id,
+    'deviceInfo.deviceId': deviceInfo.deviceId,
+    isRevoked: false,
+    expiresAt: { $gt: new Date() },
+  });
+
+  if (session) {
+    // Update existing session
+    session.deviceInfo = deviceInfo;
+    session.expiresAt = getRefreshTokenExpiration();
+    session.lastActivityAt = new Date();
+    session.refreshTokenHash = ''; // Will be updated below
+  } else {
+    // Create new session
+    session = new Session({
       userId: user._id,
-      'deviceInfo.deviceId': deviceInfo.deviceId,
-      isRevoked: false,
-      expiresAt: { $gt: new Date() }
+      refreshTokenHash: '',
+      deviceInfo,
+      expiresAt: getRefreshTokenExpiration(),
     });
+  }
 
-    if (session) {
-      // Update existing session
-      session.deviceInfo = deviceInfo;
-      session.expiresAt = getRefreshTokenExpiration();
-      session.lastActivityAt = new Date();
-      session.refreshTokenHash = ""; // Will be updated below
-    } else {
-      // Create new session
-      session = new Session({
-        userId: user._id,
-        refreshTokenHash: "",
-        deviceInfo,
-        expiresAt: getRefreshTokenExpiration(),
-      });
-    }
-  
-    const accessToken = await generateAccessToken(user._id.toString(), session._id.toString(), user.role);
-  
-    const refreshToken = await generateRefreshToken(
-      user._id.toString(),
-      session._id.toString()
-    );
-  
-    session.refreshTokenHash = hashToken(refreshToken);
-    await session.save();
-  
-    user.lastLoginAt = new Date();
-    await user.save();
-  
-    logger.info(`User logged in: ${user.email} from ${deviceInfo.deviceName} (${session ? 'Session updated' : 'New session'})`);
-  
-    return {
-      user: user.toJSON(),
-      accessToken,
-      refreshToken,
-      session: {
-        id: session._id.toString(),
-        deviceInfo: session.deviceInfo,
-        expiresAt: session.expiresAt,
-      },
-    };
- 
+  const accessToken = await generateAccessToken(
+    user._id.toString(),
+    session._id.toString(),
+    user.role
+  );
+
+  const refreshToken = await generateRefreshToken(user._id.toString(), session._id.toString());
+
+  session.refreshTokenHash = hashToken(refreshToken);
+  await session.save();
+
+  user.lastLoginAt = new Date();
+  await user.save();
+
+  logger.info(
+    `User logged in: ${user.email} from ${deviceInfo.deviceName} (${session ? 'Session updated' : 'New session'})`
+  );
+
+  return {
+    user: user.toJSON(),
+    accessToken,
+    refreshToken,
+    session: {
+      id: session._id.toString(),
+      deviceInfo: session.deviceInfo,
+      expiresAt: session.expiresAt,
+    },
+  };
 };
 
 /**
@@ -223,11 +224,12 @@ export const refreshAccessToken = async (
   }
 
   // Generate new tokens (token rotation)
-  const newAccessToken = await generateAccessToken(user._id.toString(), session._id.toString(), user.role);
-  const newRefreshToken = await generateRefreshToken(
+  const newAccessToken = await generateAccessToken(
     user._id.toString(),
-    session._id.toString()
+    session._id.toString(),
+    user.role
   );
+  const newRefreshToken = await generateRefreshToken(user._id.toString(), session._id.toString());
 
   // Update session with new token hash
   session.refreshTokenHash = hashToken(newRefreshToken);
@@ -295,14 +297,8 @@ export const getActiveSessions = async (userId: string) => {
 /**
  * Revoke specific session
  */
-export const revokeSession = async (
-  userId: string,
-  sessionId: string
-): Promise<boolean> => {
-  const result = await Session.updateOne(
-    { _id: sessionId, userId },
-    { isRevoked: true }
-  );
+export const revokeSession = async (userId: string, sessionId: string): Promise<boolean> => {
+  const result = await Session.updateOne({ _id: sessionId, userId }, { isRevoked: true });
 
   return result.modifiedCount > 0;
 };

@@ -158,3 +158,131 @@ export const revokeSession = async (
     next(error);
   }
 };
+
+/**
+ * Send OTP to email
+ * POST /auth/send-otp
+ */
+export const sendOtp = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+  try {
+    const { email, purpose, userName } = req.body;
+
+    // Dynamic import to avoid circular dependency
+    const { otpService } = await import('../services/otp.service');
+    const result = await otpService.sendOtp(email, purpose, userName);
+
+    sendSuccess(res, result);
+  } catch (error) {
+    next(error);
+  }
+};
+
+/**
+ * Verify OTP
+ * POST /auth/verify-otp
+ */
+export const verifyOtp = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+  try {
+    const { email, otp, purpose } = req.body;
+
+    const { otpService } = await import('../services/otp.service');
+    const result = await otpService.verifyOtp(email, otp, purpose);
+
+    sendSuccess(res, result);
+  } catch (error) {
+    next(error);
+  }
+};
+
+/**
+ * Resend OTP
+ * POST /auth/resend-otp
+ */
+export const resendOtp = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+  try {
+    const { email, purpose, userName } = req.body;
+
+    const { otpService } = await import('../services/otp.service');
+    const result = await otpService.resendOtp(email, purpose, userName);
+
+    sendSuccess(res, result);
+  } catch (error) {
+    next(error);
+  }
+};
+
+/**
+ * Forgot password - send reset OTP
+ * POST /auth/forgot-password
+ */
+export const forgotPassword = async (
+  req: Request,
+  res: Response,
+  next: NextFunction
+): Promise<void> => {
+  try {
+    const { email } = req.body;
+
+    const { otpService } = await import('../services/otp.service');
+    const { OtpPurpose } = await import('../types/otp.types');
+    const result = await otpService.sendOtp(email, OtpPurpose.PASSWORD_RESET);
+
+    sendSuccess(res, result);
+  } catch (error) {
+    next(error);
+  }
+};
+
+/**
+ * Reset password with verification token
+ * POST /auth/reset-password
+ */
+export const resetPassword = async (
+  req: Request,
+  res: Response,
+  next: NextFunction
+): Promise<void> => {
+  try {
+    const { verificationToken, newPassword } = req.body;
+
+    // Verify the token
+    const jwt = await import('jsonwebtoken');
+    const config = (await import('../config')).default;
+
+    interface ResetTokenPayload {
+      email: string;
+      purpose: string;
+      verified: boolean;
+    }
+
+    let payload: ResetTokenPayload;
+    try {
+      payload = jwt.verify(verificationToken, config.jwt.accessSecret) as ResetTokenPayload;
+    } catch {
+      throw ApiError.badRequest('Invalid or expired verification token');
+    }
+
+    if (!payload.verified || payload.purpose !== 'PASSWORD_RESET') {
+      throw ApiError.badRequest('Invalid verification token');
+    }
+
+    // Find user and update password
+    const { User } = await import('../models');
+    const user = await User.findOne({ email: payload.email.toLowerCase() });
+
+    if (!user) {
+      throw ApiError.notFound('User not found');
+    }
+
+    // Update password
+    user.password = newPassword;
+    await user.save();
+
+    // Revoke all sessions for security
+    await authService.logoutAllDevices(user._id.toString());
+
+    sendSuccess(res, null, 'Password reset successfully');
+  } catch (error) {
+    next(error);
+  }
+};

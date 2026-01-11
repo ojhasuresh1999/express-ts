@@ -5,6 +5,10 @@ import {
   registerValidator,
   loginValidator,
   refreshTokenValidator,
+  sendOtpValidator,
+  verifyOtpValidator,
+  forgotPasswordValidator,
+  resetPasswordValidator,
 } from '../validators/auth.validators';
 
 const router: RouterType = Router();
@@ -38,12 +42,7 @@ const router: RouterType = Router();
  *       400:
  *         description: Validation error
  */
-router.post(
-  '/register',
-  extractDeviceInfo,
-  validate(registerValidator),
-  authController.register
-);
+router.post('/register', extractDeviceInfo, validate(registerValidator), authController.register);
 
 /**
  * @swagger
@@ -67,12 +66,157 @@ router.post(
  *       401:
  *         description: Invalid credentials
  */
-router.post(
-  '/login',
-  extractDeviceInfo,
-  validate(loginValidator),
-  authController.login
-);
+router.post('/login', extractDeviceInfo, validate(loginValidator), authController.login);
+
+/**
+ * @swagger
+ * /auth/send-otp:
+ *   post:
+ *     summary: Send OTP to email
+ *     tags: [Auth]
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - email
+ *               - purpose
+ *             properties:
+ *               email:
+ *                 type: string
+ *                 format: email
+ *               purpose:
+ *                 type: string
+ *                 enum: [REGISTRATION, PASSWORD_RESET, EMAIL_VERIFICATION, LOGIN_VERIFICATION]
+ *               userName:
+ *                 type: string
+ *     responses:
+ *       200:
+ *         description: OTP sent successfully
+ *       409:
+ *         description: Cooldown active
+ */
+router.post('/send-otp', validate(sendOtpValidator), authController.sendOtp);
+
+/**
+ * @swagger
+ * /auth/verify-otp:
+ *   post:
+ *     summary: Verify OTP
+ *     tags: [Auth]
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - email
+ *               - otp
+ *               - purpose
+ *             properties:
+ *               email:
+ *                 type: string
+ *                 format: email
+ *               otp:
+ *                 type: string
+ *               purpose:
+ *                 type: string
+ *                 enum: [REGISTRATION, PASSWORD_RESET, EMAIL_VERIFICATION, LOGIN_VERIFICATION]
+ *     responses:
+ *       200:
+ *         description: OTP verified successfully
+ *       400:
+ *         description: Invalid OTP
+ */
+router.post('/verify-otp', validate(verifyOtpValidator), authController.verifyOtp);
+
+/**
+ * @swagger
+ * /auth/resend-otp:
+ *   post:
+ *     summary: Resend OTP
+ *     tags: [Auth]
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - email
+ *               - purpose
+ *             properties:
+ *               email:
+ *                 type: string
+ *                 format: email
+ *               purpose:
+ *                 type: string
+ *                 enum: [REGISTRATION, PASSWORD_RESET, EMAIL_VERIFICATION, LOGIN_VERIFICATION]
+ *               userName:
+ *                 type: string
+ *     responses:
+ *       200:
+ *         description: OTP resent successfully
+ *       409:
+ *         description: Cooldown active
+ */
+router.post('/resend-otp', validate(sendOtpValidator), authController.resendOtp);
+
+/**
+ * @swagger
+ * /auth/forgot-password:
+ *   post:
+ *     summary: Initiate password reset
+ *     tags: [Auth]
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - email
+ *             properties:
+ *               email:
+ *                 type: string
+ *                 format: email
+ *     responses:
+ *       200:
+ *         description: Password reset OTP sent
+ */
+router.post('/forgot-password', validate(forgotPasswordValidator), authController.forgotPassword);
+
+/**
+ * @swagger
+ * /auth/reset-password:
+ *   post:
+ *     summary: Reset password with verification token
+ *     tags: [Auth]
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - verificationToken
+ *               - newPassword
+ *             properties:
+ *               verificationToken:
+ *                 type: string
+ *               newPassword:
+ *                 type: string
+ *                 minLength: 8
+ *     responses:
+ *       200:
+ *         description: Password reset successfully
+ *       400:
+ *         description: Invalid token or password
+ */
+router.post('/reset-password', validate(resetPasswordValidator), authController.resetPassword);
 
 /**
  * @swagger
@@ -96,11 +240,7 @@ router.post(
  *       401:
  *         description: Invalid or expired refresh token
  */
-router.post(
-  '/refresh',
-  validate(refreshTokenValidator),
-  authController.refresh
-);
+router.post('/refresh', validate(refreshTokenValidator), authController.refresh);
 
 /**
  * @swagger

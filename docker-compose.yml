@@ -63,6 +63,7 @@ services:
   redis:
     image: redis:${REDIS_VERSION:-7-alpine}
     container_name: ${REDIS_CONTAINER_NAME:-redis-cache}
+    command: redis-server --requirepass ${REDIS_PASSWORD:-redis_password}
     restart: unless-stopped
     ports:
       - '${REDIS_PORT:-6379}:6379'
@@ -82,7 +83,8 @@ services:
       - redis
     environment:
       - REDIS_HOST=redis
-      - REDIS_PORT=6379    
+      - REDIS_PORT=6379
+      - REDIS_PASSWORD=${REDIS_PASSWORD:-redis_password}    
 
 networks:
   app-network:

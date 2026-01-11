@@ -8,6 +8,7 @@ import { connectDB } from './config/database';
 import { redisService } from './services/redis.service';
 import { socketService } from './services/socket.service';
 import { tusService } from './services/tus.service';
+import { queueService, initializeWorkers, closeWorkers, registerBullBoardQueues } from './queues';
 
 process.on('uncaughtException', handleUncaughtException);
 
@@ -33,6 +34,14 @@ const gracefulShutdown = (signal: string): void => {
     }
 
     logger.info('HTTP server closed');
+
+    // Close queue workers first (stop processing jobs)
+    await closeWorkers();
+    logger.info('Queue workers closed');
+
+    // Close queue service
+    await queueService.close();
+    logger.info('Queue service closed');
 
     // Close Socket.IO connections
     await socketService.close();
@@ -77,6 +86,21 @@ const startServer = async (): Promise<void> => {
     await socketService.initialize(server);
     logger.info('Socket.IO initialized');
 
+    // Initialize Queue Service
+    await queueService.initialize();
+    logger.info('Queue service initialized');
+
+    // Register queues with Bull Board
+    registerBullBoardQueues();
+
+    // Initialize Queue Workers (processors)
+    initializeWorkers({
+      emailConcurrency: config.queue.concurrency,
+      smsConcurrency: Math.ceil(config.queue.concurrency / 2),
+      notificationConcurrency: config.queue.concurrency,
+    });
+    logger.info('Queue workers initialized');
+
     // Start HTTP server
     server.listen(config.port, config.host, () => {
       logger.info(`
@@ -85,11 +109,12 @@ const startServer = async (): Promise<void> => {
 ║   🚀 Server is running!                                   ║
 ║                                                           ║
 ║   ➤ Environment: ${config.env.padEnd(38)}║
-║   ➤ URL: http://${config.host}:${config.port}${' '.repeat(Math.max(0, 34 - `${config.host}:${config.port}`.length))}║
-║   ➤ API: http://${config.host}:${config.port}${config.api.prefix}${' '.repeat(Math.max(0, 34 - `${config.host}:${config.port}${config.api.prefix}`.length))}║
-║   ➤ Health: http://${config.host}:${config.port}${config.api.prefix}/health${' '.repeat(Math.max(0, 27 - `${config.host}:${config.port}${config.api.prefix}`.length))}║
-║   ➤ Swagger: http://${config.host}:${config.port}/api-docs${' '.repeat(Math.max(0, 30 - `${config.host}:${config.port}/api-docs`.length))}║
-║   ➤ Socket.IO: ws://${config.host}:${config.port}${config.socket.path}${' '.repeat(Math.max(0, 26 - `${config.host}:${config.port}${config.socket.path}`.length))}║
+║   ➤ URL: http://${config.host}:${config.port}${' '.repeat(Math.max(0, 34 - `${config.host}:${config.port}`.length))}  ║
+║   ➤ API: http://${config.host}:${config.port}${config.api.prefix}${' '.repeat(Math.max(0, 34 - `${config.host}:${config.port}${config.api.prefix}`.length))} ║
+║   ➤ Health: http://${config.host}:${config.port}${config.api.prefix}/health${' '.repeat(Math.max(0, 27 - `${config.host}:${config.port}${config.api.prefix}`.length))} ║
+║   ➤ Swagger: http://${config.host}:${config.port}/api-docs${' '.repeat(Math.max(0, 30 - `${config.host}:${config.port}/api-docs`.length))} ║
+║   ➤ Socket.IO: ws://${config.host}:${config.port}${config.socket.path}${' '.repeat(Math.max(0, 26 - `${config.host}:${config.port}${config.socket.path}`.length))} ║
+║   ➤ Bull Board: http://${config.host}:${config.port}${config.queue.boardPath}${' '.repeat(Math.max(0, 26 - `${config.host}:${config.port}${config.queue.boardPath}`.length))} ║
 ║                                                           ║
 ╚═══════════════════════════════════════════════════════════╝
     `);

@@ -154,6 +154,17 @@ class SocketService {
   }
 
   /**
+   * Emit event to a specific room
+   */
+  public emitToRoom(room: string, event: string, data: unknown): void {
+    if (!this.io) {
+      logger.warn('Socket.IO not initialized, cannot emit to room');
+      return;
+    }
+    this.io.to(room).emit(event, data);
+  }
+
+  /**
    * Get connected sockets count
    */
   public async getConnectedCount(): Promise<number> {
