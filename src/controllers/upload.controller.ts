@@ -349,7 +349,7 @@ export const getUploadStatus = async (
   try {
     const { uploadId } = req.params;
 
-    const result = await tusService.getUploadResult(uploadId);
+    const result = await tusService.getUploadResult(uploadId, true);
 
     if (result.status === 'not_found') {
       sendError(res, 'Upload not found', StatusCodes.NOT_FOUND);

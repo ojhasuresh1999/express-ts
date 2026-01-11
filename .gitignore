@@ -15,7 +15,7 @@ build/
 logs/
 *.log
 npm-debug.log*
-upload
+uploads
 
 # IDE
 .idea/

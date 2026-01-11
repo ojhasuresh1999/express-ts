@@ -159,7 +159,10 @@ class TusService {
   /**
    * Get upload status and result
    */
-  async getUploadResult(uploadId: string): Promise<{
+  async getUploadResult(
+    uploadId: string,
+    shouldCleanup: boolean = false
+  ): Promise<{
     status: 'pending' | 'completed' | 'not_found';
     result?: Record<string, unknown>;
     progress?: number;
@@ -171,6 +174,16 @@ class TusService {
     // Check if result exists (upload completed and processed)
     if (fs.existsSync(resultPath)) {
       const result = JSON.parse(await fs.promises.readFile(resultPath, 'utf-8'));
+
+      if (shouldCleanup) {
+        try {
+          await fs.promises.unlink(resultPath);
+          logger.info(`Cleaned up result file for upload: ${uploadId}`);
+        } catch (error) {
+          logger.error(`Failed to cleanup result file for: ${uploadId}`, error);
+        }
+      }
+
       return { status: 'completed', result };
     }
 
