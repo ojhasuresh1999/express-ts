@@ -26,7 +26,7 @@ const options: swaggerJsdoc.Options = {
         description: 'Local Development Server',
       },
       {
-        url: `https://api.example.com${config.api.prefix}`,
+        url: `https://express-ts-api-w5c6.onrender.com${config.api.prefix}`,
         description: 'Production Server',
       },
     ],
