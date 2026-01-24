@@ -4,6 +4,7 @@ import authRoutes from './auth.routes';
 import userRoutes from './user.routes';
 import notificationRoutes from './notification.routes';
 import uploadRoutes from './upload.routes';
+import chatRoutes from './chat.routes';
 
 const router: RouterType = Router();
 
@@ -21,5 +22,8 @@ router.use('/notifications', notificationRoutes);
 
 // Upload routes
 router.use('/upload', uploadRoutes);
+
+// Chat routes
+router.use('/chat', chatRoutes);
 
 export default router;

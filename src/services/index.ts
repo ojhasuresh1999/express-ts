@@ -10,3 +10,4 @@ export { socketService } from './socket.service';
 export { onesignalService } from './onesignal.service';
 export { notificationService } from './notification.service';
 export { emailService } from './email.service';
+export { chatService } from './chat.service';

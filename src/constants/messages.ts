@@ -43,4 +43,58 @@ export const MESSAGES = {
     SOCKET_NOT_INIT: 'Socket.IO not initialized. Call initialize() first.',
     AUTH_REQUIRED: 'Authentication required',
   },
+  CHAT: {
+    // Conversation
+    CONVERSATION_NOT_FOUND: 'Conversation not found',
+    CONVERSATION_CREATED: 'Conversation created successfully',
+    CONVERSATION_UPDATED: 'Conversation updated successfully',
+    CONVERSATION_DELETED: 'Conversation deleted successfully',
+    NOT_PARTICIPANT: 'You are not a participant of this conversation',
+    ALREADY_PARTICIPANT: 'User is already a participant',
+    CANNOT_REMOVE_ADMIN: 'Cannot remove the conversation creator',
+    CANNOT_MESSAGE_SELF: 'Cannot create conversation with yourself',
+    GROUP_NAME_REQUIRED: 'Group name is required for group conversations',
+    MIN_PARTICIPANTS: 'Group conversation requires at least 2 other participants',
+    PARTICIPANT_ADDED: 'Participant added successfully',
+    PARTICIPANT_REMOVED: 'Participant removed successfully',
+    LEFT_CONVERSATION: 'Left conversation successfully',
+    NOT_ADMIN: 'Only admins can perform this action',
+    CANNOT_LEAVE_DIRECT: 'Cannot leave a direct conversation',
+
+    // Messages
+    MESSAGE_NOT_FOUND: 'Message not found',
+    MESSAGE_SENT: 'Message sent successfully',
+    MESSAGE_UPDATED: 'Message updated successfully',
+    MESSAGE_DELETED: 'Message deleted successfully',
+    CANNOT_EDIT_OTHERS_MESSAGE: "Cannot edit another user's message",
+    CANNOT_DELETE_OTHERS_MESSAGE: "Cannot delete another user's message for everyone",
+    MESSAGE_TOO_LONG: 'Message content is too long',
+    EMPTY_MESSAGE: 'Message content cannot be empty',
+
+    // Reactions
+    REACTION_ADDED: 'Reaction added',
+    REACTION_REMOVED: 'Reaction removed',
+    REACTION_NOT_FOUND: 'Reaction not found',
+
+    // Mute
+    CONVERSATION_MUTED: 'Conversation muted',
+    CONVERSATION_UNMUTED: 'Conversation unmuted',
+
+    // Read
+    MARKED_AS_READ: 'Conversation marked as read',
+
+    // Archive
+    CONVERSATION_ARCHIVED: 'Conversation archived',
+    CONVERSATION_UNARCHIVED: 'Conversation unarchived',
+
+    // Pin
+    MESSAGE_PINNED: 'Message pinned',
+    MESSAGE_UNPINNED: 'Message unpinned',
+    CONVERSATION_PINNED: 'Conversation pinned',
+    CONVERSATION_UNPINNED: 'Conversation unpinned',
+
+    // Typing
+    TYPING_STARTED: 'User started typing',
+    TYPING_STOPPED: 'User stopped typing',
+  },
 };

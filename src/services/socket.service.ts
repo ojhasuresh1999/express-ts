@@ -6,6 +6,7 @@ import logger from '../utils/logger';
 import { redisService } from './redis.service';
 import * as tokenService from './token.service';
 import { MESSAGES } from '../constants/messages';
+import { registerChatEvents } from './chat.events';
 
 /**
  * Extended socket with user data
@@ -91,6 +92,9 @@ class SocketService {
         // Join user's personal room for multi-device support
         socket.join(`user:${userId}`);
         logger.debug(`Socket connected: ${socket.id} for user: ${userId}`);
+
+        // Register chat event handlers
+        registerChatEvents(socket, this.io!);
       }
 
       // Handle disconnection
